@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/miloquinn/open-reading-source-protocol/schemas/discovery.schema.json",
+  "title": "Open Reading Source Discovery Document",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "protocol",
+    "protocolVersion",
+    "id",
+    "name",
+    "apiBaseUrl",
+    "capabilities"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "open-reading-source"
+    },
+    "protocolVersion": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+(?:\\.[0-9]+)?$"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 200
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "apiBaseUrl": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://"
+    },
+    "iconUrl": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://"
+    },
+    "websiteUrl": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://"
+    },
+    "languages": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 2,
+        "maxLength": 35
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "contains": {
+        "const": "search"
+      },
+      "items": {
+        "enum": ["search", "detail", "catalog", "content"]
+      }
+    }
+  }
+}
