@@ -1,64 +1,185 @@
 # Open Reading Source Protocol 1.0
 
-Status: **Early public draft**
+Status: **Stabilization draft**
 
 The key words MUST, MUST NOT, REQUIRED, SHOULD, SHOULD NOT, and MAY in this
-document are to be interpreted as described in RFC 2119 and RFC 8174.
+document are to be interpreted as described in RFC 2119 and RFC 8174 when, and
+only when, they appear in all capitals.
 
-## 1. Scope
+## 1. Scope and design goals
 
-ORSP defines discovery, search, book metadata, chapter catalogs, and chapter
-content retrieval. Version 1.0 covers public HTTP(S) sources that do not require
-user authentication.
+Open Reading Source Protocol (ORSP) defines a safe HTTP boundary between a
+reading client and an independently operated content source. ORSP 1.0 covers:
 
-## 2. Discovery
+- source discovery;
+- book search and metadata;
+- chapter catalogs;
+- chapter content retrieval.
 
-A source MUST expose a JSON discovery document at:
+ORSP 1.0 covers public HTTP(S) sources that do not require user authentication.
+It does not define executable scraping rules. A source MAY use an authorized
+adapter internally, but clients only receive data described by this protocol.
+
+The core reading profile is intentionally small. A conforming ORSP 1.0 source
+MUST implement the complete discovery, search, detail, catalog, and content
+path. Optional features are advertised as capabilities and MUST NOT change the
+meaning of core fields or endpoints.
+
+## 2. Protocol versions and evolution
+
+Protocol versions use `MAJOR.MINOR`, for example `1.0`. They are not Semantic
+Versioning package versions and MUST NOT include a patch component.
+
+- A major version may make incompatible changes.
+- A minor version may add optional object members, optional capability tokens,
+  optional endpoints, or additional enum values with defined fallback behavior.
+- A minor version MUST NOT remove or reinterpret an existing field, make an
+  optional field required, or change the meaning of an existing HTTP status.
+
+A client implementing ORSP 1.x SHOULD accept any discovery document with major
+version `1`. This is safe only because all 1.x implementations MUST follow the
+forward-compatibility rules in this document.
+
+Clients MUST ignore unknown JSON object members. Clients MUST ignore unknown
+optional capability tokens. A source MUST NOT require an extension capability
+for discovery, search, detail, catalog, or content in the core reading profile.
+
+Missing and `null` are different values. Sources MUST omit an unavailable
+optional member. A source MUST NOT emit `null` unless the member's schema
+explicitly permits it.
+
+## 3. Discovery
+
+A source MUST expose a JSON discovery document at the origin-root path:
 
 ```text
 /.well-known/open-reading-source.json
 ```
 
-Clients MAY also accept the complete discovery-document URL from a user.
+Clients MAY also accept a complete discovery-document URL supplied by a user or
+registry. Redirect handling is defined in Section 5.
 
-Required fields:
+Required discovery members:
 
-| Field | Requirement |
+| Member | Requirement |
 | --- | --- |
 | `protocol` | MUST equal `open-reading-source` |
-| `protocolVersion` | Semantic version; this specification uses `1.0` |
-| `id` | Stable globally unique source identifier; reverse-domain form is recommended |
+| `protocolVersion` | ORSP `MAJOR.MINOR`; this specification uses `1.0` |
+| `id` | Stable globally unique source identifier |
 | `name` | Human-readable source name |
-| `apiBaseUrl` | Absolute HTTP(S) API base URL |
-| `capabilities` | MUST contain `search` |
+| `apiBaseUrl` | Absolute HTTP(S) URL ending in `/` |
+| `capabilities` | MUST contain all four core capability tokens |
 
-Optional fields are `description`, `iconUrl`, `websiteUrl`, and `languages`.
+Core capability tokens are `search`, `detail`, `catalog`, and `content`.
 
-Clients implementing version 1.x SHOULD accept discovery documents whose major
-version is `1`. A source MUST NOT change its `id` when its host or display name
-changes.
+Extension capability tokens MUST use a collision-resistant namespace in the
+form `reverse.domain:name`, for example `org.example:audio`. An extension token
+MUST NOT use the `orsp` namespace unless it is defined by a future ORSP
+specification. Unknown extension tokens do not make a source incompatible.
+
+Optional discovery members are `description`, `iconUrl`, `websiteUrl`, and
+`languages`. Language tags MUST follow BCP 47, such as `en`, `zh-CN`, or
+`sr-Latn`.
+
+`apiBaseUrl` MUST NOT contain user information, a query, or a fragment and MUST
+end in `/`. Endpoint paths in this document are resolved relative to that URL.
+For example, an API base URL of `https://books.example/api/` and endpoint
+relation `v1/search` produce `https://books.example/api/v1/search`.
+
+The source `id` MUST be between 3 and 200 characters, start and end with an
+ASCII letter or digit, and otherwise contain only ASCII letters, digits, `.`,
+`_`, or `-`. It MUST remain unchanged when the source host, API URL, or display
+name changes. Reverse-domain form is recommended. Source IDs identify a source
+only; book and chapter IDs are scoped to that source.
 
 The discovery document is formally described by
 [`schemas/discovery.schema.json`](schemas/discovery.schema.json).
 
-## 3. Common requirements
+## 4. Data model and encoding
+
+### 4.1 JSON and text
 
 - Requests and responses MUST use UTF-8.
-- JSON responses MUST use `application/json`.
-- Clients SHOULD send `X-Open-Reading-Protocol: 1.0`.
-- IDs are stable opaque strings. Clients MUST NOT infer their structure.
-- Timestamps MUST use ISO 8601.
-- Production deployments SHOULD use HTTPS.
-- Sources SHOULD return an `ETag` or suitable cache headers where practical.
-- Clients MUST treat source HTML as untrusted input.
+- JSON responses MUST use `application/json`; media type parameters such as
+  `charset=utf-8` are allowed.
+- JSON object member names are case-sensitive.
+- Clients MUST ignore unknown object members at every nesting level.
+- Sources SHOULD normalize human-readable text to Unicode NFC.
+- Timestamps MUST be RFC 3339 `date-time` values. UTC with a `Z` suffix is
+  recommended.
 
-## 4. Search
+### 4.2 Identifiers
+
+Book and chapter IDs are stable opaque strings. To produce identical routing
+behavior across common HTTP frameworks, wire IDs MUST contain only RFC 3986
+unreserved ASCII characters: letters, digits, `-`, `.`, `_`, and `~`.
+
+IDs MUST be between 1 and 200 characters. Clients MUST treat each ID as one URL
+path segment and MUST NOT infer hierarchy or other meaning from it. A source
+MUST NOT reuse an ID for a different logical resource.
+
+Chapter IDs are unique within a book. Book IDs are unique within a source.
+
+### 4.3 URLs
+
+JSON URL members MUST be absolute HTTP(S) URLs unless a field explicitly says
+otherwise. Clients MUST reject unsupported URL schemes. Clients SHOULD apply
+platform-appropriate limits before downloading covers or other remote assets.
+
+### 4.4 Enums
+
+For descriptive enums that include the value `unknown`, clients MUST map an
+unrecognized value to `unknown`. For operational enums such as `contentType`, a
+client MUST report that the representation is unsupported rather than guessing
+how to interpret it.
+
+## 5. HTTP behavior
+
+- Core endpoints use `GET` and MUST be safe and idempotent.
+- Clients SHOULD send `Accept: application/json`.
+- Clients SHOULD send `X-Open-Reading-Protocol` with their highest supported
+  ORSP 1.x version, for example `1.0`.
+- Sources MAY return `X-Open-Reading-Protocol` containing the source protocol
+  version.
+- Unsupported methods MUST return `405 Method Not Allowed` and SHOULD include
+  an `Allow` header.
+- Sources SHOULD support HTTP compression for large JSON responses.
+
+Clients MAY follow redirects, subject to all of the following:
+
+- no more than five redirects per request;
+- redirect targets MUST use HTTP(S);
+- production clients SHOULD NOT follow an HTTPS-to-HTTP downgrade;
+- credentials or private headers MUST NOT be forwarded to a different origin.
+
+Clients SHOULD enforce configurable connection, response-time, decompressed
+size, and redirect limits. A client MUST treat all source responses as
+untrusted input.
+
+### 5.1 Caching
+
+Discovery, detail, catalog, and content responses SHOULD provide an `ETag` or
+appropriate `Cache-Control`/`Last-Modified` headers. When a client sends
+`If-None-Match` with a current entity tag, a source SHOULD return `304 Not
+Modified` with no response body.
+
+An entity tag identifies the complete selected representation. Sources MUST
+change it when a response changes in a way visible to a client.
+
+## 6. Search
+
+Endpoint relation:
 
 ```text
-GET /v1/search?q={query}&page={page}&pageSize={pageSize}
+GET v1/search?q={query}&page={page}&pageSize={pageSize}
 ```
 
-`q` is required. `page` starts at 1. `pageSize` SHOULD be between 1 and 100.
+`q` is required after trimming surrounding whitespace and MUST contain between
+1 and 200 Unicode scalar values. `page` starts at 1 and defaults to 1.
+`pageSize` defaults to 20 and MUST be between 1 and 100.
+
+Sources MAY ignore unknown query parameters. Sources MUST return `400` for an
+invalid known query parameter.
 
 Response:
 
@@ -74,6 +195,7 @@ Response:
       "categories": ["Fiction"],
       "status": "completed",
       "latestChapter": "Chapter 30",
+      "language": "en",
       "updatedAt": "2026-07-11T10:00:00Z"
     }
   ],
@@ -84,22 +206,36 @@ Response:
 }
 ```
 
-Book objects MUST include `id` and `title`. Other fields are optional.
+`items`, `page`, `pageSize`, and `hasMore` are required. `pageSize` reports the
+requested page capacity, not the number of returned items. `total` is optional
+because some sources cannot calculate it efficiently. Search ranking is
+source-defined but SHOULD be deterministic for an unchanged dataset and query.
 
-## 5. Book details
+Book objects MUST include `id` and `title`. Other members are optional.
+`language`, when present, MUST be a BCP 47 tag. `status` is one of `ongoing`,
+`completed`, `hiatus`, or `unknown`.
+
+## 7. Book details
+
+Endpoint relation:
 
 ```text
-GET /v1/books/{bookId}
+GET v1/books/{bookId}
 ```
 
 The response uses the same book object as search and MAY provide a longer
-description or richer metadata.
+description or additional optional metadata. Existing member meanings MUST be
+identical in search and detail responses.
 
-## 6. Chapter catalog
+## 8. Chapter catalog
+
+Endpoint relation:
 
 ```text
-GET /v1/books/{bookId}/chapters
+GET v1/books/{bookId}/chapters?page={page}&pageSize={pageSize}
 ```
+
+`page` defaults to 1. `pageSize` defaults to 100 and MUST be between 1 and 100.
 
 ```json
 {
@@ -110,17 +246,29 @@ GET /v1/books/{bookId}/chapters
       "order": 1,
       "updatedAt": "2026-07-11T10:00:00Z"
     }
-  ]
+  ],
+  "page": 1,
+  "pageSize": 100,
+  "total": 1,
+  "hasMore": false
 }
 ```
 
 Chapter objects MUST contain `id`, `title`, and `order`. `order` is a
-zero-or-positive integer used for deterministic display ordering.
+zero-or-positive integer. Sources SHOULD use unique order values within a book.
+When order values are equal, clients MUST use the chapter ID as an ascending
+secondary sort key so display order remains deterministic.
 
-## 7. Chapter content
+Catalog pages MUST be sorted by `(order, id)`. A source SHOULD return an `ETag`
+for each catalog page. A client that observes a changed catalog validator while
+loading multiple pages SHOULD restart catalog loading to avoid a mixed view.
+
+## 9. Chapter content
+
+Endpoint relation:
 
 ```text
-GET /v1/books/{bookId}/chapters/{chapterId}
+GET v1/books/{bookId}/chapters/{chapterId}
 ```
 
 ```json
@@ -129,55 +277,101 @@ GET /v1/books/{bookId}/chapters/{chapterId}
   "chapterId": "chapter-1",
   "title": "Chapter One",
   "contentType": "text/plain",
-  "content": "Chapter content"
+  "content": "Chapter content",
+  "baseUrl": "https://books.example.org/books/book-1001/"
 }
 ```
 
-`contentType` MUST be one of:
+`bookId` and `chapterId` MUST exactly match the requested resource. `baseUrl` is
+optional and, when present, MUST be an absolute HTTP(S) URL.
 
-- `text/plain`
-- `text/markdown`
-- `text/html`
+ORSP 1.0 content types are:
 
-HTML MUST be a content fragment and MUST NOT contain executable scripts.
-Clients SHOULD sanitize it before rendering.
+- `text/plain`;
+- `text/markdown`, interpreted as CommonMark;
+- `text/html`, containing an HTML fragment rather than a complete document.
 
-## 8. Errors
+Relative links and image URLs are resolved against `baseUrl` when provided,
+otherwise against the final chapter request URL.
 
-Recommended status codes:
+HTML MUST NOT contain scripts or other executable content. Sources SHOULD
+remove event-handler attributes, dangerous URL schemes, embedded frames, and
+active form controls. Clients MUST still sanitize HTML before rendering it.
+Raw HTML embedded in Markdown MUST receive the same treatment.
+
+## 10. Errors
+
+Core status codes:
 
 | Status | Meaning |
 | --- | --- |
-| `400` | Invalid request |
+| `304` | Selected representation has not changed |
+| `400` | Invalid request parameter or malformed ID |
 | `404` | Book, chapter, or route not found |
-| `429` | Rate limited; `Retry-After` is recommended |
+| `405` | HTTP method not supported |
+| `429` | Rate limited; `Retry-After` SHOULD be included |
 | `500` | Internal source error |
-| `503` | Source temporarily unavailable |
+| `503` | Source temporarily unavailable; `Retry-After` MAY be included |
 
-Recommended error body:
+Except for responses that cannot contain a body, error responses MUST use:
 
 ```json
 {
   "error": {
     "code": "BOOK_NOT_FOUND",
-    "message": "The requested book does not exist"
+    "message": "The requested book does not exist",
+    "retryable": false,
+    "requestId": "request-7f3a"
   }
 }
 ```
 
-## 9. Security
+`code` and `message` are required. Codes MUST use stable uppercase ASCII words
+separated by underscores. `message` is intended for developers and diagnostics;
+clients SHOULD NOT assume it is localized. `retryable` and `requestId` are
+optional. Clients MUST ignore unknown error members and unknown error codes.
 
-Sources MUST validate query parameters and opaque IDs, SHOULD impose response
-size and rate limits, and MUST NOT expose credentials, cookies, internal URLs,
-or executable code. Web-facing sources are responsible for an appropriate CORS
-policy.
+Sources MUST NOT include credentials, cookies, internal URLs, stack traces, or
+other sensitive implementation details in error responses.
 
-## 10. Future work
+## 11. Security and privacy
 
-The following features are intentionally outside version 1.0:
+Sources MUST validate known query parameters and IDs and SHOULD impose rate,
+response-size, execution-time, and upstream-fetch limits. Production sources
+SHOULD use HTTPS.
+
+Clients accepting user- or registry-supplied source URLs SHOULD protect against
+server-side request forgery, DNS rebinding, loopback/private-network access,
+redirect loops, decompression bombs, and unexpectedly large images or content.
+Whether private-network sources are allowed is a client policy decision and
+SHOULD be explicit to the user.
+
+Web-facing sources are responsible for an appropriate CORS policy. CORS is not
+required for native clients.
+
+ORSP does not grant copyright or access rights. Source operators are
+responsible for distributing only content they are authorized to provide.
+
+## 12. Conformance
+
+An implementation claiming `ORSP 1.0 Core Reading` conformance MUST:
+
+1. implement discovery and all four core capabilities;
+2. satisfy the normative requirements in this document;
+3. pass the official core conformance suite for the claimed version;
+4. disclose optional extension capabilities separately.
+
+Passing syntax validation alone is not evidence of protocol conformance.
+Conformance reports SHOULD record the test-suite version and execution date.
+
+## 13. Reserved future work
+
+The following features are intentionally outside ORSP 1.0 and require a future
+minor version, major version, or companion specification:
 
 - authentication and paid-content authorization;
-- incremental catalog synchronization;
+- cursor-based and incremental catalog synchronization;
 - offline package/download manifests;
-- source health and conformance endpoints;
+- source health and registry protocols;
+- audio and other media representations;
 - annotations, highlights, and reading-progress synchronization.

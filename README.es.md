@@ -24,10 +24,10 @@ GET /.well-known/open-reading-source.json
 También implementa cuatro operaciones principales:
 
 ```text
-GET /v1/search?q={query}&page=1&pageSize=20
-GET /v1/books/{bookId}
-GET /v1/books/{bookId}/chapters
-GET /v1/books/{bookId}/chapters/{chapterId}
+GET {apiBaseUrl}v1/search?q={query}&page=1&pageSize=20
+GET {apiBaseUrl}v1/books/{bookId}
+GET {apiBaseUrl}v1/books/{bookId}/chapters?page=1&pageSize=100
+GET {apiBaseUrl}v1/books/{bookId}/chapters/{chapterId}
 ```
 
 Consulta la [especificación](SPECIFICATION.md) y la definición
@@ -57,7 +57,7 @@ emulador de Android.
 
 ## Estado y uso responsable
 
-La versión `1.0` es un borrador público inicial. El flujo básico de lectura ya
+La versión `1.0` es un borrador de estabilización. El flujo básico de lectura ya
 ha sido verificado, pero se aceptan propuestas sobre autenticación,
 sincronización, paginación y formatos de contenido antes de declarar una
 versión estable.

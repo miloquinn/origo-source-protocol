@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+const protocolVersion = '1.0';
+final _opaqueIdPattern = RegExp(r'^[A-Za-z0-9._~-]{1,200}$');
+
 class ReferenceSourceServer {
   HttpServer? _server;
 
@@ -22,37 +25,42 @@ class ReferenceSourceServer {
     return baseUri;
   }
 
-  Future<void> close() async => _server?.close(force: true);
+  Future<void> close() async {
+    await _server?.close(force: true);
+    _server = null;
+  }
 
   Future<void> _serve(HttpServer server) async {
     await for (final request in server) {
       try {
         _handle(request);
-      } catch (error) {
-        _send(request.response, 500, {
-          'error': {'code': 'INTERNAL_ERROR', 'message': '$error'},
-        });
+      } catch (_) {
+        _error(request, 500, 'INTERNAL_ERROR', retryable: true);
       }
     }
   }
 
   void _handle(HttpRequest request) {
     _cors(request.response);
+    request.response.headers.set('X-Open-Reading-Protocol', protocolVersion);
+
     if (request.method == 'OPTIONS') {
+      request.response.statusCode = HttpStatus.noContent;
       request.response.close();
       return;
     }
     if (request.method != 'GET') {
-      _error(request.response, 405, 'METHOD_NOT_ALLOWED');
+      request.response.headers.set(HttpHeaders.allowHeader, 'GET, OPTIONS');
+      _error(request, 405, 'METHOD_NOT_ALLOWED');
       return;
     }
 
     final path = request.uri.path;
     final segments = request.uri.pathSegments;
     if (path == '/.well-known/open-reading-source.json') {
-      _send(request.response, 200, {
+      _sendJson(request, 200, {
         'protocol': 'open-reading-source',
-        'protocolVersion': '1.0',
+        'protocolVersion': protocolVersion,
         'id': 'dev.open-reading.reference-source',
         'name': 'ORSP Reference Source',
         'description': 'Original sample content for protocol development.',
@@ -71,73 +79,179 @@ class ReferenceSourceServer {
         segments[1] == 'v1' &&
         segments[2] == 'books') {
       final bookId = segments[3];
+      if (!_validId(bookId)) {
+        _error(request, 400, 'INVALID_BOOK_ID');
+        return;
+      }
       final book = books[bookId];
       if (book == null) {
-        _error(request.response, 404, 'BOOK_NOT_FOUND');
+        _error(request, 404, 'BOOK_NOT_FOUND');
         return;
       }
       if (segments.length == 4) {
-        _send(request.response, 200, book.metadata);
+        _sendJson(request, 200, book.metadata);
         return;
       }
       if (segments.length == 5 && segments[4] == 'chapters') {
-        _send(request.response, 200, {
-          'items': book.chapters.map((chapter) => chapter.metadata).toList(),
-        });
+        _catalog(request, book);
         return;
       }
       if (segments.length == 6 && segments[4] == 'chapters') {
-        final chapter = book.chapters
-            .where((item) => item.id == segments[5])
-            .firstOrNull;
-        if (chapter == null) {
-          _error(request.response, 404, 'CHAPTER_NOT_FOUND');
+        final chapterId = segments[5];
+        if (!_validId(chapterId)) {
+          _error(request, 400, 'INVALID_CHAPTER_ID');
           return;
         }
-        _send(request.response, 200, {
+        final chapter = book.chapters
+            .where((item) => item.id == chapterId)
+            .firstOrNull;
+        if (chapter == null) {
+          _error(request, 404, 'CHAPTER_NOT_FOUND');
+          return;
+        }
+        _sendJson(request, 200, {
           'bookId': bookId,
           'chapterId': chapter.id,
           'title': chapter.title,
           'contentType': 'text/plain',
           'content': chapter.content,
+          'baseUrl': baseUri.resolve('books/$bookId/').toString(),
         });
         return;
       }
     }
-    _error(request.response, 404, 'ROUTE_NOT_FOUND');
+    _error(request, 404, 'ROUTE_NOT_FOUND');
   }
 
   void _search(HttpRequest request) {
-    final query = (request.uri.queryParameters['q'] ?? '').toLowerCase();
+    final rawQuery = request.uri.queryParameters['q'];
+    if (rawQuery == null) {
+      _error(request, 400, 'QUERY_REQUIRED');
+      return;
+    }
+    final query = rawQuery.trim();
+    if (query.isEmpty || query.runes.length > 200) {
+      _error(request, 400, 'INVALID_QUERY');
+      return;
+    }
+    final pagination = _pagination(request);
+    if (pagination == null) return;
+
+    final normalizedQuery = query.toLowerCase();
     final matches = books.values
         .where(
           (book) => '${book.metadata['title']} ${book.metadata['author']}'
               .toLowerCase()
-              .contains(query),
+              .contains(normalizedQuery),
         )
         .map((book) => book.metadata)
         .toList();
-    _send(request.response, 200, {
-      'items': matches,
-      'page': 1,
-      'pageSize': matches.length,
+    final pageItems = _page(matches, pagination);
+    _sendJson(request, 200, {
+      'items': pageItems,
+      'page': pagination.page,
+      'pageSize': pagination.pageSize,
       'total': matches.length,
-      'hasMore': false,
+      'hasMore': pagination.end < matches.length,
     });
   }
 
-  void _error(HttpResponse response, int status, String code) {
-    _send(response, status, {
-      'error': {'code': code, 'message': code.replaceAll('_', ' ')},
+  void _catalog(HttpRequest request, BookData book) {
+    final pagination = _pagination(request, defaultPageSize: 100);
+    if (pagination == null) return;
+    final chapters = [...book.chapters]
+      ..sort((a, b) {
+        final byOrder = a.order.compareTo(b.order);
+        return byOrder != 0 ? byOrder : a.id.compareTo(b.id);
+      });
+    _sendJson(request, 200, {
+      'items': _page(
+        chapters,
+        pagination,
+      ).map((chapter) => chapter.metadata).toList(),
+      'page': pagination.page,
+      'pageSize': pagination.pageSize,
+      'total': chapters.length,
+      'hasMore': pagination.end < chapters.length,
     });
   }
 
-  void _send(HttpResponse response, int status, Object body) {
+  Pagination? _pagination(HttpRequest request, {int defaultPageSize = 20}) {
+    final pageText = request.uri.queryParameters['page'];
+    final pageSizeText = request.uri.queryParameters['pageSize'];
+    final page = pageText == null ? 1 : int.tryParse(pageText);
+    final pageSize = pageSizeText == null
+        ? defaultPageSize
+        : int.tryParse(pageSizeText);
+    if (page == null || page < 1) {
+      _error(request, 400, 'INVALID_PAGE');
+      return null;
+    }
+    if (pageSize == null || pageSize < 1 || pageSize > 100) {
+      _error(request, 400, 'INVALID_PAGE_SIZE');
+      return null;
+    }
+    return Pagination(page, pageSize);
+  }
+
+  List<T> _page<T>(List<T> items, Pagination pagination) {
+    if (pagination.start >= items.length) return const [];
+    final end = pagination.end.clamp(0, items.length);
+    return items.sublist(pagination.start, end);
+  }
+
+  bool _validId(String value) => _opaqueIdPattern.hasMatch(value);
+
+  void _error(
+    HttpRequest request,
+    int status,
+    String code, {
+    bool retryable = false,
+  }) {
+    _sendJson(request, status, {
+      'error': {
+        'code': code,
+        'message': code.replaceAll('_', ' '),
+        'retryable': retryable,
+      },
+    }, cacheable: false);
+  }
+
+  void _sendJson(
+    HttpRequest request,
+    int status,
+    Object body, {
+    bool cacheable = true,
+  }) {
+    final encoded = jsonEncode(body);
+    final response = request.response;
+    if (cacheable) {
+      final etag = _etag(encoded);
+      response.headers
+        ..set(HttpHeaders.etagHeader, etag)
+        ..set(HttpHeaders.cacheControlHeader, 'public, max-age=60');
+      if (request.headers.value(HttpHeaders.ifNoneMatchHeader) == etag) {
+        response.statusCode = HttpStatus.notModified;
+        response.close();
+        return;
+      }
+    } else {
+      response.headers.set(HttpHeaders.cacheControlHeader, 'no-store');
+    }
     response
       ..statusCode = status
       ..headers.contentType = ContentType.json
-      ..write(jsonEncode(body))
+      ..write(encoded)
       ..close();
+  }
+
+  String _etag(String value) {
+    var hash = 0x811c9dc5;
+    for (final byte in utf8.encode(value)) {
+      hash ^= byte;
+      hash = (hash * 0x01000193) & 0xffffffff;
+    }
+    return '"${hash.toRadixString(16).padLeft(8, '0')}"';
   }
 
   void _cors(HttpResponse response) {
@@ -146,9 +260,20 @@ class ReferenceSourceServer {
       ..set('Access-Control-Allow-Methods', 'GET, OPTIONS')
       ..set(
         'Access-Control-Allow-Headers',
-        'Content-Type, X-Open-Reading-Protocol',
-      );
+        'Accept, Content-Type, If-None-Match, X-Open-Reading-Protocol',
+      )
+      ..set('Access-Control-Expose-Headers', 'ETag, X-Open-Reading-Protocol');
   }
+}
+
+class Pagination {
+  final int page;
+  final int pageSize;
+
+  const Pagination(this.page, this.pageSize);
+
+  int get start => (page - 1) * pageSize;
+  int get end => start + pageSize;
 }
 
 class BookData {
@@ -184,6 +309,7 @@ const books = <String, BookData>{
       'categories': ['Original', 'Protocol'],
       'status': 'completed',
       'latestChapter': '共同的语言',
+      'language': 'zh-CN',
       'updatedAt': '2026-07-11T00:00:00Z',
     },
     [
@@ -194,6 +320,23 @@ const books = <String, BookData>{
         2,
         '当发现、搜索、目录和正文都有了共同语言，每位开发者都能种下自己的故事。',
       ),
+    ],
+  ),
+  'river-of-pages': BookData(
+    {
+      'id': 'river-of-pages',
+      'title': '书页之河',
+      'author': 'Open Reading',
+      'description': 'A second original sample used for pagination tests.',
+      'categories': ['Original'],
+      'status': 'ongoing',
+      'latestChapter': '向远方',
+      'language': 'zh-CN',
+      'updatedAt': '2026-07-12T00:00:00Z',
+    },
+    [
+      ChapterData('source', '源头', 1, '每一条繁华的河流，都从一个可以验证的小源头开始。'),
+      ChapterData('distance', '向远方', 2, '当规则稳定、道路开放，故事便会流向更多读者。'),
     ],
   ),
 };

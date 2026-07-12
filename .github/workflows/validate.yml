@@ -16,15 +16,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
+      - name: Install contract validators
+        run: >-
+          python -m pip install --disable-pip-version-check
+          jsonschema pyyaml openapi-spec-validator
       - name: Check Dart formatting
-        run: dart format --output=none --set-exit-if-changed examples/dart_server.dart
-      - name: Analyze reference server
-        run: dart analyze examples/dart_server.dart
-      - name: Validate JSON documents
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          examples/dart_server.dart tool/conformance_test.dart
+      - name: Analyze Dart implementation
+        run: dart analyze examples/dart_server.dart tool/conformance_test.dart
+      - name: Validate schemas, examples, and OpenAPI
+        run: python scripts/validate_contracts.py
+      - name: Validate community registry manifests
         run: |
-          python -m json.tool schemas/discovery.schema.json > /dev/null
-          python -m json.tool examples/open-reading-source.json > /dev/null
-      - name: Validate OpenAPI YAML syntax
-        run: |
-          python -m pip install --disable-pip-version-check pyyaml
-          python -c "import pathlib, yaml; yaml.safe_load(pathlib.Path('openapi.yaml').read_text())"
+          python scripts/registry_tool.py validate
+          python scripts/registry_tool.py build --check
+          python scripts/test_registry_tool.py
+      - name: Run core conformance tests
+        run: dart run tool/conformance_test.dart

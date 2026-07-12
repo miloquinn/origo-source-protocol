@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: Open Reading Source Protocol
-  version: 1.0.0
-  description: Standard API implemented by an ORSP-compatible book source.
+  version: '1.0'
+  description: Machine-readable contract for the ORSP 1.0 Core Reading profile.
   license:
     name: MIT
     identifier: MIT
@@ -14,75 +14,133 @@ paths:
       operationId: searchBooks
       summary: Search books
       parameters:
+        - $ref: '#/components/parameters/ProtocolVersion'
         - name: q
           in: query
           required: true
           schema: { type: string, minLength: 1, maxLength: 200 }
-        - name: page
-          in: query
-          schema: { type: integer, minimum: 1, default: 1 }
-        - name: pageSize
-          in: query
-          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
       responses:
         '200':
           description: Search results
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/SearchPage' }
+        '304': { $ref: '#/components/responses/NotModified' }
         '400': { $ref: '#/components/responses/BadRequest' }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
         '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
   /v1/books/{bookId}:
     get:
       operationId: getBook
       summary: Get book details
       parameters:
+        - $ref: '#/components/parameters/ProtocolVersion'
         - $ref: '#/components/parameters/BookId'
       responses:
         '200':
           description: Book details
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Book' }
+        '304': { $ref: '#/components/responses/NotModified' }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
   /v1/books/{bookId}/chapters:
     get:
       operationId: listChapters
       summary: List a book's chapters
       parameters:
+        - $ref: '#/components/parameters/ProtocolVersion'
         - $ref: '#/components/parameters/BookId'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/CatalogPageSize'
       responses:
         '200':
-          description: Chapter catalog
+          description: Paginated chapter catalog
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ChapterPage' }
+        '304': { $ref: '#/components/responses/NotModified' }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
   /v1/books/{bookId}/chapters/{chapterId}:
     get:
       operationId: getChapterContent
       summary: Get chapter content
       parameters:
+        - $ref: '#/components/parameters/ProtocolVersion'
         - $ref: '#/components/parameters/BookId'
-        - name: chapterId
-          in: path
-          required: true
-          schema: { type: string, minLength: 1, maxLength: 500 }
+        - $ref: '#/components/parameters/ChapterId'
       responses:
         '200':
           description: Chapter content
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ChapterContent' }
+        '304': { $ref: '#/components/responses/NotModified' }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
 components:
   parameters:
+    ProtocolVersion:
+      name: X-Open-Reading-Protocol
+      in: header
+      required: false
+      description: Highest ORSP 1.x version supported by the client.
+      schema: { type: string, pattern: '^1\.(?:0|[1-9][0-9]*)$' }
+    Page:
+      name: page
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, default: 1 }
+    PageSize:
+      name: pageSize
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    CatalogPageSize:
+      name: pageSize
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 100, default: 100 }
     BookId:
       name: bookId
       in: path
       required: true
-      schema: { type: string, minLength: 1, maxLength: 500 }
+      schema: { $ref: '#/components/schemas/OpaqueId' }
+    ChapterId:
+      name: chapterId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/OpaqueId' }
+  headers:
+    ETag:
+      description: Entity tag for the selected representation.
+      schema: { type: string }
   responses:
+    NotModified:
+      description: The selected representation has not changed.
     BadRequest:
       description: Invalid request
       content:
@@ -93,74 +151,126 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
+    MethodNotAllowed:
+      description: HTTP method not supported
+      headers:
+        Allow:
+          schema: { type: string }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
     RateLimited:
       description: Too many requests
       headers:
         Retry-After:
-          schema: { type: integer, minimum: 1 }
+          schema:
+            oneOf:
+              - { type: integer, minimum: 1 }
+              - { type: string }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    InternalError:
+      description: Internal source error
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Unavailable:
+      description: Source temporarily unavailable
+      headers:
+        Retry-After:
+          schema:
+            oneOf:
+              - { type: integer, minimum: 1 }
+              - { type: string }
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
   schemas:
+    OpaqueId:
+      type: string
+      minLength: 1
+      maxLength: 200
+      pattern: '^[A-Za-z0-9._~-]+$'
     Book:
       type: object
+      additionalProperties: true
       required: [id, title]
       properties:
-        id: { type: string, minLength: 1 }
-        title: { type: string, minLength: 1 }
-        author: { type: string }
+        id: { $ref: '#/components/schemas/OpaqueId' }
+        title: { type: string, minLength: 1, maxLength: 500 }
+        author: { type: string, maxLength: 500 }
         description: { type: string }
-        coverUrl: { type: string, format: uri }
+        coverUrl: { type: string, format: uri, pattern: '^https?://' }
         categories:
           type: array
-          items: { type: string }
+          uniqueItems: true
+          items: { type: string, minLength: 1, maxLength: 100 }
         status: { type: string, enum: [ongoing, completed, hiatus, unknown] }
-        latestChapter: { type: string }
+        latestChapter: { type: string, maxLength: 500 }
+        language:
+          type: string
+          minLength: 2
+          maxLength: 35
+          pattern: '^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$'
         updatedAt: { type: string, format: date-time }
     SearchPage:
       type: object
+      additionalProperties: true
       required: [items, page, pageSize, hasMore]
       properties:
         items:
           type: array
           items: { $ref: '#/components/schemas/Book' }
         page: { type: integer, minimum: 1 }
-        pageSize: { type: integer, minimum: 0 }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
         total: { type: integer, minimum: 0 }
         hasMore: { type: boolean }
     Chapter:
       type: object
+      additionalProperties: true
       required: [id, title, order]
       properties:
-        id: { type: string, minLength: 1 }
-        title: { type: string, minLength: 1 }
+        id: { $ref: '#/components/schemas/OpaqueId' }
+        title: { type: string, minLength: 1, maxLength: 500 }
         order: { type: integer, minimum: 0 }
         updatedAt: { type: string, format: date-time }
     ChapterPage:
       type: object
-      required: [items]
+      additionalProperties: true
+      required: [items, page, pageSize, hasMore]
       properties:
         items:
           type: array
           items: { $ref: '#/components/schemas/Chapter' }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+        total: { type: integer, minimum: 0 }
+        hasMore: { type: boolean }
     ChapterContent:
       type: object
+      additionalProperties: true
       required: [bookId, chapterId, title, contentType, content]
       properties:
-        bookId: { type: string, minLength: 1 }
-        chapterId: { type: string, minLength: 1 }
-        title: { type: string, minLength: 1 }
+        bookId: { $ref: '#/components/schemas/OpaqueId' }
+        chapterId: { $ref: '#/components/schemas/OpaqueId' }
+        title: { type: string, minLength: 1, maxLength: 500 }
         contentType:
           type: string
           enum: [text/plain, text/markdown, text/html]
         content: { type: string }
+        baseUrl: { type: string, format: uri, pattern: '^https?://' }
     ErrorResponse:
       type: object
+      additionalProperties: true
       required: [error]
       properties:
         error:
           type: object
+          additionalProperties: true
           required: [code, message]
           properties:
-            code: { type: string }
-            message: { type: string }
+            code: { type: string, pattern: '^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$' }
+            message: { type: string, minLength: 1 }
+            retryable: { type: boolean }
+            requestId: { type: string, minLength: 1, maxLength: 200 }

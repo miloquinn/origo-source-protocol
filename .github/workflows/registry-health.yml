@@ -1,0 +1,41 @@
+name: Check community registry health
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 3 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install registry validator
+        run: python -m pip install --disable-pip-version-check jsonschema
+      - name: Validate registry before network access
+        run: |
+          python scripts/registry_tool.py validate
+          python scripts/registry_tool.py build --check
+      - name: Check public sources
+        id: health
+        continue-on-error: true
+        run: >-
+          python scripts/registry_tool.py check-all
+          --status-output registry-health.json
+      - name: Upload health report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orsp-registry-health
+          path: registry-health.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Fail after preserving the report
+        if: steps.health.outcome == 'failure'
+        run: exit 1

@@ -1,4 +1,7 @@
 .dart_tool/
+.omx/
+__pycache__/
+*.pyc
 .idea/
 .vscode/
 build/

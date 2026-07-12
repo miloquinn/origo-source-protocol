@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/miloquinn/open-reading-source-protocol/registry/schemas/source-entry.schema.json",
+  "title": "ORSP Community Registry Source Entry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "discoveryUrl",
+    "maintainers",
+    "description",
+    "languages",
+    "contentTypes",
+    "testQuery",
+    "submittedAt"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$"
+    },
+    "discoveryUrl": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://[^@/?#\\s]+(?:/[^?#\\s]*)?$"
+    },
+    "maintainers": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["github"],
+        "properties": {
+          "github": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 39,
+            "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$"
+          },
+          "role": {
+            "type": "string",
+            "maxLength": 100
+          }
+        }
+      }
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "languages": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 2,
+        "maxLength": 35,
+        "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$"
+      }
+    },
+    "contentTypes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": ["original", "public-domain", "licensed"]
+      }
+    },
+    "testQuery": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "A stable query expected to return at least one readable book."
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://"
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://"
+    },
+    "reportingUrl": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://"
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "tags": {
+      "type": "array",
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 50,
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      }
+    },
+    "submittedAt": {
+      "type": "string",
+      "format": "date"
+    }
+  }
+}

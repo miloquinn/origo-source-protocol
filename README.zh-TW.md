@@ -31,10 +31,10 @@ GET /.well-known/open-reading-source.json
 並實作四個核心端點：
 
 ```text
-GET /v1/search?q={query}&page=1&pageSize=20
-GET /v1/books/{bookId}
-GET /v1/books/{bookId}/chapters
-GET /v1/books/{bookId}/chapters/{chapterId}
+GET {apiBaseUrl}v1/search?q={query}&page=1&pageSize=20
+GET {apiBaseUrl}v1/books/{bookId}
+GET {apiBaseUrl}v1/books/{bookId}/chapters?page=1&pageSize=100
+GET {apiBaseUrl}v1/books/{bookId}/chapters/{chapterId}
 ```
 
 完整欄位及錯誤處理請參閱[協議規範](SPECIFICATION.md)與
@@ -63,7 +63,7 @@ dart run examples/dart_server.dart
 
 ## 狀態與使用邊界
 
-協議 `1.0` 目前是早期公開草案。核心讀取流程已完成驗證，但在穩定版本發布前仍歡迎
+協議 `1.0` 目前是穩定化草案。核心讀取流程已完成驗證，但在穩定版本發布前仍歡迎
 對認證、同步、分頁及內容格式提出建議。
 
 ORSP 僅適用於原創、公共領域或合法授權內容。請勿用於繞過存取控制、違反服務條款或
