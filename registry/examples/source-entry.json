@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0",
+  "id": "org.example.public-books",
+  "discoveryUrl": "https://books.example.org/.well-known/open-reading-source.json",
+  "maintainers": [
+    {
+      "github": "example-author",
+      "role": "Source operator"
+    }
+  ],
+  "description": "An example registry entry for a public-domain ORSP source.",
+  "languages": ["en", "zh-CN"],
+  "contentTypes": ["public-domain"],
+  "testQuery": "Example",
+  "homepage": "https://books.example.org/",
+  "repository": "https://github.com/example/books-source",
+  "reportingUrl": "https://books.example.org/report",
+  "license": "MIT",
+  "tags": ["books", "public-domain"],
+  "submittedAt": "2026-07-12"
+}

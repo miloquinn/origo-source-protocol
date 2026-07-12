@@ -5,8 +5,20 @@ data, credentials, private source URLs, or content-provider infrastructure.
 
 Report security problems privately through GitHub's security advisory feature
 for this repository. Include reproduction steps, affected protocol version,
-and the expected impact.
+expected impact, and whether the issue affects readers, sources, adapters, or
+registries.
 
-ORSP source operators should use HTTPS in production, validate all opaque IDs
-and query parameters, sanitize HTML, set response-size limits, and avoid
-returning cookies, tokens, internal URLs, or executable scripts.
+Source operators should use HTTPS in production, validate all IDs and known
+query parameters, sanitize HTML, set response-size and execution-time limits,
+and avoid returning cookies, tokens, internal URLs, stack traces, or executable
+content.
+
+Readers should treat discovery URLs and all source responses as untrusted. They
+should defend against server-side request forgery, DNS rebinding, loopback and
+private-network access unless explicitly allowed, redirect loops, TLS
+downgrades, decompression bombs, oversized images, unsafe HTML, and dangerous
+URL schemes.
+
+Adapters should isolate source-specific credentials and parsing logic from the
+public ORSP response. Registries should avoid publishing private source
+locations or operational details that increase attack surface.

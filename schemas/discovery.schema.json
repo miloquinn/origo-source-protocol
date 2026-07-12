@@ -18,12 +18,13 @@
     },
     "protocolVersion": {
       "type": "string",
-      "pattern": "^1\\.[0-9]+(?:\\.[0-9]+)?$"
+      "pattern": "^1\\.(?:0|[1-9][0-9]*)$"
     },
     "id": {
       "type": "string",
       "minLength": 3,
-      "maxLength": 200
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$"
     },
     "name": {
       "type": "string",
@@ -37,7 +38,7 @@
     "apiBaseUrl": {
       "type": "string",
       "format": "uri",
-      "pattern": "^https?://"
+      "pattern": "^https?://[^@/?#\\s]+(?:/[^?#\\s]*)?/$"
     },
     "iconUrl": {
       "type": "string",
@@ -51,21 +52,36 @@
     },
     "languages": {
       "type": "array",
+      "maxItems": 100,
       "uniqueItems": true,
       "items": {
         "type": "string",
         "minLength": 2,
-        "maxLength": 35
+        "maxLength": 35,
+        "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$"
       }
     },
     "capabilities": {
       "type": "array",
+      "minItems": 4,
+      "maxItems": 64,
       "uniqueItems": true,
-      "contains": {
-        "const": "search"
-      },
+      "allOf": [
+        { "contains": { "const": "search" } },
+        { "contains": { "const": "detail" } },
+        { "contains": { "const": "catalog" } },
+        { "contains": { "const": "content" } }
+      ],
       "items": {
-        "enum": ["search", "detail", "catalog", "content"]
+        "anyOf": [
+          {
+            "enum": ["search", "detail", "catalog", "content"]
+          },
+          {
+            "type": "string",
+            "pattern": "^(?!orsp(?:[.:]|$))[a-z0-9]+(?:[.-][a-z0-9]+)+:[A-Za-z0-9][A-Za-z0-9._-]{0,99}$"
+          }
+        ]
       }
     }
   }

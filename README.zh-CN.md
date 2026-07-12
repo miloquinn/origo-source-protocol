@@ -2,7 +2,9 @@
 
 [English](README.md) · **简体中文** · [繁體中文](README.zh-TW.md) ·
 [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) ·
-[协议规范](SPECIFICATION.md) · [OpenAPI](openapi.yaml)
+[协议规范](SPECIFICATION.md) · [OpenAPI](openapi.yaml) ·
+[治理机制](GOVERNANCE.md) · [生态架构](ECOSYSTEM.md) ·
+[社区书源目录](registry/README.md)
 
 Open Reading Source Protocol（ORSP，开放阅读书源协议）是一套用于连接阅读应用与
 独立内容服务的开放 HTTP 协议。它让不同书源以统一方式提供搜索、书籍详情、章节目录
@@ -53,13 +55,14 @@ GET /.well-known/open-reading-source.json
 协议 1.0 定义四类核心接口：
 
 ```text
-GET /v1/search?q={query}&page=1&pageSize=20
-GET /v1/books/{bookId}
-GET /v1/books/{bookId}/chapters
-GET /v1/books/{bookId}/chapters/{chapterId}
+GET {apiBaseUrl}v1/search?q={query}&page=1&pageSize=20
+GET {apiBaseUrl}v1/books/{bookId}
+GET {apiBaseUrl}v1/books/{bookId}/chapters?page=1&pageSize=100
+GET {apiBaseUrl}v1/books/{bookId}/chapters/{chapterId}
 ```
 
-对应能力分别是搜索、书籍详情、章节目录和章节正文。完整字段与错误处理要求请阅读
+这些相对路径必须基于发现文档中的 `apiBaseUrl` 解析。ORSP 1.0 Core Reading 书源必须
+实现全部四项能力。完整字段与错误处理要求请阅读
 [协议规范](SPECIFICATION.md)，接口模型可查看 [OpenAPI 3.1 文档](openapi.yaml)。
 
 ## 快速运行测试书源
@@ -81,7 +84,7 @@ dart run examples/dart_server.dart
 
 ```bash
 curl http://127.0.0.1:8787/.well-known/open-reading-source.json
-curl "http://127.0.0.1:8787/v1/search?q=星&page=1&pageSize=20"
+curl "http://127.0.0.1:8787/api/v1/search?q=协议&page=1&pageSize=20"
 ```
 
 ## 开发自己的书源
@@ -107,16 +110,33 @@ openapi.yaml                    OpenAPI 3.1 接口定义
 schemas/discovery.schema.json   发现文档 JSON Schema
 examples/dart_server.dart       可运行的 Dart 参考书源
 examples/open-reading-source.json 发现文档示例
+tool/conformance_test.dart      端到端核心一致性测试
+GOVERNANCE.md                   协议变更与发布治理
+ECOSYSTEM.md                    适配器与联邦书源目录架构
+registry/                       基于 PR 的社区书源目录
 ```
 
 ## 当前状态与兼容性
 
-协议版本 `1.0` 目前是早期公开草案。发现、搜索、详情、目录和正文链路已经完成真实 HTTP
-验证，但在宣布稳定版本之前，仍欢迎书源开发者对认证、更新同步、分页、内容格式和错误
-处理提出建议。
+协议版本 `1.0` 目前是稳定化草案。兼容性规则、机器可读契约、参考书源和核心一致性测试
+会同步演进。在宣布稳定版本之前，欢迎独立阅读器和书源实现参与互操作验证。
+
+可以运行官方核心测试：
+
+```bash
+dart run tool/conformance_test.dart
+```
 
 同一主版本内应保持向后兼容。新增可选字段通常可以继续使用 1.x；修改必填字段、接口
 含义或响应语义则需要新的主版本。
+
+传统书源格式应通过服务端适配器转换成 ORSP，而不是把抓取脚本下发给阅读器。社区可以
+运营多个联邦式书源目录，目录负责发现、健康状态和信任信息，但不能重新定义通信协议。
+详细边界参见 [ECOSYSTEM.md](ECOSYSTEM.md)。
+
+书源维护者可以通过 Pull Request 加入[社区书源目录](registry/README.md)。每个书源使用
+一个独立 Manifest 文件，CI 会检查格式、ID、公网地址安全和完整阅读链路，然后生成供
+阅读器订阅的统一索引。
 
 ## 合法与负责任地使用
 

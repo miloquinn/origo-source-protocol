@@ -23,10 +23,10 @@ GET /.well-known/open-reading-source.json
 さらに、4 つの基本エンドポイントを実装します。
 
 ```text
-GET /v1/search?q={query}&page=1&pageSize=20
-GET /v1/books/{bookId}
-GET /v1/books/{bookId}/chapters
-GET /v1/books/{bookId}/chapters/{chapterId}
+GET {apiBaseUrl}v1/search?q={query}&page=1&pageSize=20
+GET {apiBaseUrl}v1/books/{bookId}
+GET {apiBaseUrl}v1/books/{bookId}/chapters?page=1&pageSize=100
+GET {apiBaseUrl}v1/books/{bookId}/chapters/{chapterId}
 ```
 
 フィールドとエラー処理の詳細は、[仕様書](SPECIFICATION.md)および
@@ -55,7 +55,7 @@ PC では `http://127.0.0.1:8787`、Android エミュレーターでは
 
 ## ステータスと責任ある利用
 
-バージョン `1.0` は初期公開ドラフトです。基本的な読書フローは検証済みですが、安定版の
+バージョン `1.0` は安定化ドラフトです。基本的な読書フローは検証済みですが、安定版の
 公開前に、認証、同期、ページング、コンテンツ形式についてのフィードバックを歓迎します。
 
 ORSP は、オリジナル、パブリックドメイン、または正規に許諾されたコンテンツを対象とします。

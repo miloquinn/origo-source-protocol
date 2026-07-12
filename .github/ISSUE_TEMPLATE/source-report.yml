@@ -1,0 +1,36 @@
+name: Report a registry source
+description: Report availability, security, maintenance, abuse, or rights concerns
+title: "[Source report]: "
+labels: [registry, source-report]
+body:
+  - type: input
+    id: source_id
+    attributes:
+      label: Source ID
+      placeholder: org.example.public-books
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Availability or compatibility
+        - Security or malicious behavior
+        - Maintainer or ownership
+        - Copyright or content rights
+        - Incorrect registry metadata
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Include dates, requests, responses, and public references. Do not post secrets.
+    validations:
+      required: true
+  - type: textarea
+    id: requested_action
+    attributes:
+      label: Requested action
+      description: Explain whether you are requesting correction, warning, suspension, or removal.

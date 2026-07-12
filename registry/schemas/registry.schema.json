@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/miloquinn/open-reading-source-protocol/registry/schemas/registry.schema.json",
+  "title": "ORSP Community Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sources"],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "source-entry.schema.json"
+      }
+    }
+  }
+}
