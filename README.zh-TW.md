@@ -37,6 +37,14 @@ GET {apiBaseUrl}v1/books/{bookId}/chapters?page=1&pageSize=100
 GET {apiBaseUrl}v1/books/{bookId}/chapters/{chapterId}
 ```
 
+協議 1.1 亦提供可選的探索、分類與瀏覽端點：
+
+```text
+GET {apiBaseUrl}v1/discover
+GET {apiBaseUrl}v1/categories
+GET {apiBaseUrl}v1/browse?category={categoryId}&sort=latest&page=1&pageSize=20
+```
+
 完整欄位及錯誤處理請參閱[協議規範](SPECIFICATION.md)與
 [OpenAPI 3.1 文件](openapi.yaml)。
 
@@ -63,7 +71,7 @@ dart run examples/dart_server.dart
 
 ## 狀態與使用邊界
 
-協議 `1.0` 目前是穩定化草案。核心讀取流程已完成驗證，但在穩定版本發布前仍歡迎
+協議 `1.1` 目前是候選草案。核心讀取流程已完成驗證，但在穩定版本發布前仍歡迎
 對認證、同步、分頁及內容格式提出建議。
 
 ORSP 僅適用於原創、公共領域或合法授權內容。請勿用於繞過存取控制、違反服務條款或

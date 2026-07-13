@@ -30,6 +30,15 @@ GET {apiBaseUrl}v1/books/{bookId}/chapters?page=1&pageSize=100
 GET {apiBaseUrl}v1/books/{bookId}/chapters/{chapterId}
 ```
 
+La versión 1.1 también define operaciones opcionales de descubrimiento,
+categorías y exploración:
+
+```text
+GET {apiBaseUrl}v1/discover
+GET {apiBaseUrl}v1/categories
+GET {apiBaseUrl}v1/browse?category={categoryId}&sort=latest&page=1&pageSize=20
+```
+
 Consulta la [especificación](SPECIFICATION.md) y la definición
 [OpenAPI 3.1](openapi.yaml) para conocer todos los campos y errores.
 
@@ -57,7 +66,7 @@ emulador de Android.
 
 ## Estado y uso responsable
 
-La versión `1.0` es un borrador de estabilización. El flujo básico de lectura ya
+La versión `1.1` es un borrador candidato. El flujo básico de lectura ya
 ha sido verificado, pero se aceptan propuestas sobre autenticación,
 sincronización, paginación y formatos de contenido antes de declarar una
 versión estable.

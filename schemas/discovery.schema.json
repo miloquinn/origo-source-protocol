@@ -75,7 +75,15 @@
       "items": {
         "anyOf": [
           {
-            "enum": ["search", "detail", "catalog", "content"]
+            "enum": [
+              "search",
+              "discover",
+              "categories",
+              "browse",
+              "detail",
+              "catalog",
+              "content"
+            ]
           },
           {
             "type": "string",
@@ -84,5 +92,20 @@
         ]
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "capabilities": { "contains": { "const": "categories" } }
+        },
+        "required": ["capabilities"]
+      },
+      "then": {
+        "properties": {
+          "capabilities": { "contains": { "const": "browse" } }
+        }
+      }
+    }
+  ]
 }

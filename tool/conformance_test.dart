@@ -28,24 +28,74 @@ Future<void> main() async {
       'discovery uses application/json',
     );
     check(
-      discovery.headers.value('x-open-reading-protocol') == '1.0',
+      discovery.headers.value('x-open-reading-protocol') == '1.1',
       'source advertises its protocol version header',
     );
     final discoveryJson = discovery.json as Map<String, dynamic>;
     check(discoveryJson['protocol'] == 'open-reading-source', 'protocol token');
-    check(discoveryJson['protocolVersion'] == '1.0', 'protocol version');
+    check(discoveryJson['protocolVersion'] == '1.1', 'protocol version');
     final capabilities = (discoveryJson['capabilities'] as List).toSet();
     check(
-      capabilities.containsAll(['search', 'detail', 'catalog', 'content']),
-      'all core capabilities are advertised',
+      capabilities.containsAll([
+        'search',
+        'discover',
+        'categories',
+        'browse',
+        'detail',
+        'catalog',
+        'content',
+      ]),
+      'core and discovery capabilities are advertised',
     );
     final apiBase = Uri.parse(discoveryJson['apiBaseUrl'] as String);
     check(apiBase.path.endsWith('/'), 'apiBaseUrl ends in a slash');
 
+    final discover = await request(client, apiBase.resolve('v1/discover'));
+    check(discover.status == 200, 'discover returns 200');
+    final discoverSections = (discover.json as Map)['sections'] as List;
+    check(discoverSections.length == 2, 'discover returns curated sections');
+    check(
+      (discoverSections.first as Map)['id'] == 'featured',
+      'discover section IDs are stable',
+    );
+
+    final categories = await request(client, apiBase.resolve('v1/categories'));
+    check(categories.status == 200, 'categories returns 200');
+    final categoryItems = (categories.json as Map)['items'] as List;
+    check(categoryItems.length == 2, 'categories returns source categories');
+    check(
+      categoryItems.any((item) => (item as Map)['id'] == 'protocol'),
+      'category IDs are browseable',
+    );
+
+    final latest = await request(
+      client,
+      apiBase.resolve('v1/browse?sort=latest&page=1&pageSize=20'),
+      headers: {'X-Open-Reading-Protocol': '1.1'},
+    );
+    check(latest.status == 200, 'latest browse returns 200');
+    final latestItems = (latest.json as Map)['items'] as List;
+    check(
+      (latestItems.first as Map)['id'] == 'river-of-pages',
+      'latest browse ordering is deterministic',
+    );
+
+    final categoryBrowse = await request(
+      client,
+      apiBase.resolve('v1/browse?category=protocol&sort=popular'),
+    );
+    final categoryBrowseItems = (categoryBrowse.json as Map)['items'] as List;
+    check(categoryBrowse.status == 200, 'category browse returns 200');
+    check(categoryBrowseItems.length == 1, 'category browse filters books');
+    check(
+      (categoryBrowseItems.single as Map)['id'] == 'protocol-garden',
+      'category browse uses category IDs unchanged',
+    );
+
     final searchPage1 = await request(
       client,
       apiBase.resolve('v1/search?q=Open%20Reading&page=1&pageSize=1&future=x'),
-      headers: {'X-Open-Reading-Protocol': '1.0'},
+      headers: {'X-Open-Reading-Protocol': '1.1'},
     );
     check(searchPage1.status == 200, 'search returns 200');
     final searchJson1 = searchPage1.json as Map<String, dynamic>;
@@ -118,6 +168,12 @@ Future<void> main() async {
       apiBase.resolve('v1/search?q=test&page=0'),
     );
     checkError(invalidPage, 400, 'INVALID_PAGE', check);
+
+    final invalidSort = await request(
+      client,
+      apiBase.resolve('v1/browse?sort=random'),
+    );
+    checkError(invalidSort, 400, 'INVALID_SORT', check);
 
     final missingBook = await request(
       client,

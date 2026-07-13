@@ -42,17 +42,20 @@ GET /.well-known/open-reading-source.json
 ```json
 {
   "protocol": "open-reading-source",
-  "protocolVersion": "1.0",
+  "protocolVersion": "1.1",
   "id": "org.example.public-books",
   "name": "示例公共图书源",
   "description": "由 Example.org 维护的公共领域图书",
   "apiBaseUrl": "https://books.example.org/api/",
   "languages": ["zh-CN"],
-  "capabilities": ["search", "detail", "catalog", "content"]
+  "capabilities": [
+    "search", "discover", "categories", "browse",
+    "detail", "catalog", "content"
+  ]
 }
 ```
 
-协议 1.0 定义四类核心接口：
+协议 1.1 保留四类核心接口：
 
 ```text
 GET {apiBaseUrl}v1/search?q={query}&page=1&pageSize=20
@@ -61,8 +64,17 @@ GET {apiBaseUrl}v1/books/{bookId}/chapters?page=1&pageSize=100
 GET {apiBaseUrl}v1/books/{bookId}/chapters/{chapterId}
 ```
 
-这些相对路径必须基于发现文档中的 `apiBaseUrl` 解析。ORSP 1.0 Core Reading 书源必须
-实现全部四项能力。完整字段与错误处理要求请阅读
+支持内容发现的书源还可以声明三个可选标准能力：
+
+```text
+GET {apiBaseUrl}v1/discover
+GET {apiBaseUrl}v1/categories
+GET {apiBaseUrl}v1/browse?category={categoryId}&sort=latest&page=1&pageSize=20
+```
+
+这些相对路径必须基于发现文档中的 `apiBaseUrl` 解析。ORSP 1.1 Core Reading 书源必须
+实现全部四项核心能力；发现、分类和浏览按能力声明启用，旧的 1.0 书源无需修改也可以
+继续搜索和阅读。完整字段与错误处理要求请阅读
 [协议规范](SPECIFICATION.md)，接口模型可查看 [OpenAPI 3.1 文档](openapi.yaml)。
 
 ## 快速运行测试书源
@@ -106,6 +118,7 @@ HTML 正文应被视为不可信输入，客户端在渲染前应进行清理。
 
 ```text
 SPECIFICATION.md                规范性协议说明
+OEP-0001-discovery.md           ORSP 1.1 发现能力提案与兼容性分析
 openapi.yaml                    OpenAPI 3.1 接口定义
 schemas/discovery.schema.json   发现文档 JSON Schema
 examples/dart_server.dart       可运行的 Dart 参考书源
@@ -118,7 +131,7 @@ registry/                       基于 PR 的社区书源目录
 
 ## 当前状态与兼容性
 
-协议版本 `1.0` 目前是稳定化草案。兼容性规则、机器可读契约、参考书源和核心一致性测试
+协议版本 `1.1` 目前是候选草案。兼容性规则、机器可读契约、参考书源和核心一致性测试
 会同步演进。在宣布稳定版本之前，欢迎独立阅读器和书源实现参与互操作验证。
 
 可以运行官方核心测试：
