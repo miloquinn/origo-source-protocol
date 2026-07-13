@@ -49,6 +49,16 @@ Future<void> main() async {
     );
     final apiBase = Uri.parse(discoveryJson['apiBaseUrl'] as String);
     check(apiBase.path.endsWith('/'), 'apiBaseUrl ends in a slash');
+    final supportedVersions = discoveryJson['supportedVersions'] as List;
+    check(
+      supportedVersions.contains(discoveryJson['protocolVersion']),
+      'supportedVersions includes protocolVersion',
+    );
+    final maxCatalogPageSize = discoveryJson['maxCatalogPageSize'] as int;
+    check(
+      maxCatalogPageSize >= 100 && maxCatalogPageSize <= 1000,
+      'maxCatalogPageSize is within the allowed range',
+    );
 
     final discover = await request(client, apiBase.resolve('v1/discover'));
     check(discover.status == 200, 'discover returns 200');
@@ -149,6 +159,29 @@ Future<void> main() async {
     final catalogItems2 = (catalog2.json as Map)['items'] as List;
     check(catalogItems2.single['id'] == 'common-language', 'catalog order');
 
+    final catalogLarge = await request(
+      client,
+      apiBase.resolve(
+        'v1/books/protocol-garden/chapters?pageSize=$maxCatalogPageSize',
+      ),
+    );
+    check(
+      catalogLarge.status == 200,
+      'catalog accepts the declared maxCatalogPageSize',
+    );
+    check(
+      (catalogLarge.json as Map)['pageSize'] == maxCatalogPageSize,
+      'catalog reports the requested capacity',
+    );
+
+    final catalogTooLarge = await request(
+      client,
+      apiBase.resolve(
+        'v1/books/protocol-garden/chapters?pageSize=${maxCatalogPageSize + 1}',
+      ),
+    );
+    checkError(catalogTooLarge, 400, 'INVALID_PARAMETER', check);
+
     final content = await request(
       client,
       apiBase.resolve('v1/books/protocol-garden/chapters/seed'),
@@ -161,19 +194,19 @@ Future<void> main() async {
     check(Uri.parse(contentJson['baseUrl'] as String).isAbsolute, 'base URL');
 
     final missingQuery = await request(client, apiBase.resolve('v1/search'));
-    checkError(missingQuery, 400, 'QUERY_REQUIRED', check);
+    checkError(missingQuery, 400, 'INVALID_PARAMETER', check);
 
     final invalidPage = await request(
       client,
       apiBase.resolve('v1/search?q=test&page=0'),
     );
-    checkError(invalidPage, 400, 'INVALID_PAGE', check);
+    checkError(invalidPage, 400, 'INVALID_PARAMETER', check);
 
     final invalidSort = await request(
       client,
       apiBase.resolve('v1/browse?sort=random'),
     );
-    checkError(invalidSort, 400, 'INVALID_SORT', check);
+    checkError(invalidSort, 400, 'INVALID_PARAMETER', check);
 
     final missingBook = await request(
       client,

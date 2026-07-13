@@ -28,6 +28,11 @@ Reviewers should explain rejection or deferral using concrete protocol, safety,
 maintenance, or policy reasons. Competing readers and sources must be treated
 under the same criteria.
 
+Source IDs must be unique within this registry; automated validation rejects a
+submission whose ID duplicates an accepted entry. A submission that reuses the
+ID of a previously accepted source is treated as a maintainer transfer and
+requires the evidence described below, not a fresh review.
+
 ## Maintainer transfer
 
 An existing maintainer may add or transfer responsibility through a pull

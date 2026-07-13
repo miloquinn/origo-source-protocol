@@ -38,10 +38,24 @@ Versioning package versions and MUST NOT include a patch component.
   optional endpoints, or additional enum values with defined fallback behavior.
 - A minor version MUST NOT remove or reinterpret an existing field, make an
   optional field required, or change the meaning of an existing HTTP status.
+- A minor version MUST NOT add a request query parameter to an existing
+  endpoint except as part of a new capability token. A client MUST NOT send
+  such a parameter to a source that does not advertise the corresponding
+  capability. This keeps parameter support explicit: a source never silently
+  ignores a parameter whose effect the client depends on.
 
 A client implementing ORSP 1.x SHOULD accept any discovery document with major
 version `1`. This is safe only because all 1.x implementations MUST follow the
 forward-compatibility rules in this document.
+
+`protocolVersion` identifies the protocol version the discovery document
+itself conforms to. A source that implements more than one protocol version
+SHOULD also list every implemented version in the optional
+`supportedVersions` discovery member (Section 3). Endpoint relations carry
+their own major-version prefix (`v1/...`), so one `apiBaseUrl` can serve
+several major versions side by side. Complete cross-major negotiation rules
+are reserved future work (Section 16); within major version 1,
+`supportedVersions` is informative.
 
 Clients MUST ignore unknown JSON object members. Clients MUST ignore unknown
 optional capability tokens. A source MUST NOT require an extension capability
@@ -94,9 +108,18 @@ form `reverse.domain:name`, for example `org.example:audio`. An extension token
 MUST NOT use the `orsp` namespace unless it is defined by a future ORSP
 specification. Unknown extension tokens do not make a source incompatible.
 
-Optional discovery members are `description`, `iconUrl`, `websiteUrl`, and
-`languages`. Language tags MUST follow BCP 47, such as `en`, `zh-CN`, or
-`sr-Latn`.
+Optional discovery members are `description`, `iconUrl`, `websiteUrl`,
+`languages`, `supportedVersions`, and `maxCatalogPageSize`. Language tags MUST
+follow BCP 47, such as `en`, `zh-CN`, or `sr-Latn`.
+
+`supportedVersions`, when present, is a non-empty array of ORSP
+`MAJOR.MINOR` version strings that MUST include `protocolVersion`. It lets a
+multi-version source state every protocol version it implements. ORSP 1.1
+clients MAY use it for diagnostics and MUST NOT require it.
+
+`maxCatalogPageSize`, when present, is an integer between 100 and 1000
+declaring the largest `pageSize` the source accepts on the chapter-catalog
+endpoint (Section 11). When absent, the limit is 100.
 
 `apiBaseUrl` MUST NOT contain user information, a query, or a fragment and MUST
 end in `/`. Endpoint paths in this document are resolved relative to that URL.
@@ -108,6 +131,14 @@ ASCII letter or digit, and otherwise contain only ASCII letters, digits, `.`,
 `_`, or `-`. It MUST remain unchanged when the source host, API URL, or display
 name changes. Reverse-domain form is recommended. Source IDs identify a source
 only; book and chapter IDs are scoped to that source.
+
+No central authority allocates source IDs, so a client can encounter two
+different sources claiming the same `id`. Clients MUST NOT treat the `id`
+alone as a storage key. A client MUST key stored source state on at least the
+pair of `id` and the discovery-document origin, MUST NOT silently merge or
+replace an installed source when a different origin presents the same `id`,
+and SHOULD surface such a collision to the user. Two discovery documents
+describe the same source only when both the `id` and the origin match.
 
 The discovery document is formally described by
 [`schemas/discovery.schema.json`](schemas/discovery.schema.json).
@@ -341,7 +372,12 @@ Endpoint relation:
 GET v1/books/{bookId}/chapters?page={page}&pageSize={pageSize}
 ```
 
-`page` defaults to 1. `pageSize` defaults to 100 and MUST be between 1 and 100.
+`page` defaults to 1. `pageSize` defaults to 100. Its upper bound is the
+source's declared `maxCatalogPageSize` (Section 3), or 100 when that member is
+absent. A source MUST return `400` for a `pageSize` above its declared bound,
+and a client MUST NOT send one. Long serials commonly have thousands of
+chapters, so sources able to serve larger pages SHOULD declare a higher bound
+to reduce request counts.
 
 ```json
 {
@@ -437,6 +473,25 @@ separated by underscores. `message` is intended for developers and diagnostics;
 clients SHOULD NOT assume it is localized. `retryable` and `requestId` are
 optional. Clients MUST ignore unknown error members and unknown error codes.
 
+ORSP 1.1 defines these standard error codes:
+
+| Code | Status | Condition |
+| --- | --- | --- |
+| `INVALID_PARAMETER` | `400` | A known query parameter or ID is missing, malformed, or out of range |
+| `BOOK_NOT_FOUND` | `404` | The book ID does not identify a book |
+| `CHAPTER_NOT_FOUND` | `404` | The chapter ID does not identify a chapter of the book |
+| `ROUTE_NOT_FOUND` | `404` | The path is not an endpoint of this source |
+| `METHOD_NOT_ALLOWED` | `405` | The HTTP method is not supported |
+| `RATE_LIMITED` | `429` | The client exceeded a request-rate limit |
+| `INTERNAL_ERROR` | `500` | An unexpected source-side failure |
+| `UNAVAILABLE` | `503` | The source is temporarily unable to serve requests |
+
+When a condition matches a standard code, sources SHOULD return that code and
+MUST NOT use a standard code for a different condition. All codes without an
+`X_` prefix are reserved for current and future ORSP specifications;
+source-defined codes MUST begin with `X_`, for example `X_REGION_BLOCKED`.
+Parameter-level detail belongs in `message`.
+
 Sources MUST NOT include credentials, cookies, internal URLs, stack traces, or
 other sensitive implementation details in error responses.
 
@@ -482,6 +537,13 @@ The following features are intentionally outside ORSP 1.1 and require a future
 minor version, major version, or companion specification:
 
 - authentication and paid-content authorization;
+- cross-major version negotiation: rules for choosing an entry point when a
+  source advertises several major versions through `supportedVersions`,
+  including any per-version endpoint mapping a major version needs;
+- content-representation negotiation, letting a client learn which
+  `contentType` values a source emits before requesting chapters;
+- localized discovery metadata, such as per-language `name` and `description`
+  members;
 - cursor-based and incremental catalog synchronization;
 - offline package/download manifests;
 - source health and registry protocols;

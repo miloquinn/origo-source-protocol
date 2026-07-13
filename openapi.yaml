@@ -191,7 +191,10 @@ components:
       name: pageSize
       in: query
       required: false
-      schema: { type: integer, minimum: 1, maximum: 100, default: 100 }
+      description: >-
+        Bounded by the source's declared maxCatalogPageSize discovery member,
+        or 100 when that member is absent.
+      schema: { type: integer, minimum: 1, maximum: 1000, default: 100 }
     BookId:
       name: bookId
       in: path
@@ -346,7 +349,7 @@ components:
           type: array
           items: { $ref: '#/components/schemas/Chapter' }
         page: { type: integer, minimum: 1 }
-        pageSize: { type: integer, minimum: 1, maximum: 100 }
+        pageSize: { type: integer, minimum: 1, maximum: 1000 }
         total: { type: integer, minimum: 0 }
         hasMore: { type: boolean }
     ChapterContent:
@@ -372,7 +375,14 @@ components:
           additionalProperties: true
           required: [code, message]
           properties:
-            code: { type: string, pattern: '^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$' }
+            code:
+              type: string
+              pattern: '^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$'
+              description: >-
+                Standard ORSP codes: INVALID_PARAMETER, BOOK_NOT_FOUND,
+                CHAPTER_NOT_FOUND, ROUTE_NOT_FOUND, METHOD_NOT_ALLOWED,
+                RATE_LIMITED, INTERNAL_ERROR, UNAVAILABLE. Source-defined
+                codes must use the X_ prefix. Clients ignore unknown codes.
             message: { type: string, minLength: 1 }
             retryable: { type: boolean }
             requestId: { type: string, minLength: 1, maxLength: 200 }

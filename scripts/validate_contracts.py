@@ -61,6 +61,30 @@ def main() -> None:
     reserved_extension["capabilities"].append("orsp:private")
     expect_invalid(validator, reserved_extension, "reserved extension namespace")
 
+    patch_supported_version = copy.deepcopy(discovery)
+    patch_supported_version["supportedVersions"] = ["1.1.0"]
+    expect_invalid(
+        validator,
+        patch_supported_version,
+        "patch version inside supportedVersions",
+    )
+
+    catalog_page_size_too_small = copy.deepcopy(discovery)
+    catalog_page_size_too_small["maxCatalogPageSize"] = 50
+    expect_invalid(
+        validator,
+        catalog_page_size_too_small,
+        "maxCatalogPageSize below the shared minimum",
+    )
+
+    catalog_page_size_too_large = copy.deepcopy(discovery)
+    catalog_page_size_too_large["maxCatalogPageSize"] = 5000
+    expect_invalid(
+        validator,
+        catalog_page_size_too_large,
+        "maxCatalogPageSize above the shared maximum",
+    )
+
     openapi = yaml.safe_load((ROOT / "openapi.yaml").read_text(encoding="utf-8"))
     validate_spec(openapi)
 

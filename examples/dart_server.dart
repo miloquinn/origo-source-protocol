@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 const protocolVersion = '1.1';
+const maxCatalogPageSize = 200;
 final _opaqueIdPattern = RegExp(r'^[A-Za-z0-9._~-]{1,200}$');
 
 class ReferenceSourceServer {
@@ -35,7 +36,13 @@ class ReferenceSourceServer {
       try {
         _handle(request);
       } catch (_) {
-        _error(request, 500, 'INTERNAL_ERROR', retryable: true);
+        _error(
+          request,
+          500,
+          'INTERNAL_ERROR',
+          'Unexpected source error',
+          retryable: true,
+        );
       }
     }
   }
@@ -51,7 +58,7 @@ class ReferenceSourceServer {
     }
     if (request.method != 'GET') {
       request.response.headers.set(HttpHeaders.allowHeader, 'GET, OPTIONS');
-      _error(request, 405, 'METHOD_NOT_ALLOWED');
+      _error(request, 405, 'METHOD_NOT_ALLOWED', 'Only GET is supported');
       return;
     }
 
@@ -61,11 +68,13 @@ class ReferenceSourceServer {
       _sendJson(request, 200, {
         'protocol': 'open-reading-source',
         'protocolVersion': protocolVersion,
+        'supportedVersions': [protocolVersion],
         'id': 'dev.open-reading.reference-source',
         'name': 'ORSP Reference Source',
         'description': 'Original sample content for protocol development.',
         'apiBaseUrl': baseUri.resolve('api/').toString(),
         'languages': ['zh-CN', 'en'],
+        'maxCatalogPageSize': maxCatalogPageSize,
         'capabilities': [
           'search',
           'discover',
@@ -100,12 +109,12 @@ class ReferenceSourceServer {
         segments[2] == 'books') {
       final bookId = segments[3];
       if (!_validId(bookId)) {
-        _error(request, 400, 'INVALID_BOOK_ID');
+        _error(request, 400, 'INVALID_PARAMETER', 'Malformed book ID');
         return;
       }
       final book = books[bookId];
       if (book == null) {
-        _error(request, 404, 'BOOK_NOT_FOUND');
+        _error(request, 404, 'BOOK_NOT_FOUND', 'Unknown book ID');
         return;
       }
       if (segments.length == 4) {
@@ -119,14 +128,14 @@ class ReferenceSourceServer {
       if (segments.length == 6 && segments[4] == 'chapters') {
         final chapterId = segments[5];
         if (!_validId(chapterId)) {
-          _error(request, 400, 'INVALID_CHAPTER_ID');
+          _error(request, 400, 'INVALID_PARAMETER', 'Malformed chapter ID');
           return;
         }
         final chapter = book.chapters
             .where((item) => item.id == chapterId)
             .firstOrNull;
         if (chapter == null) {
-          _error(request, 404, 'CHAPTER_NOT_FOUND');
+          _error(request, 404, 'CHAPTER_NOT_FOUND', 'Unknown chapter ID');
           return;
         }
         _sendJson(request, 200, {
@@ -140,18 +149,23 @@ class ReferenceSourceServer {
         return;
       }
     }
-    _error(request, 404, 'ROUTE_NOT_FOUND');
+    _error(request, 404, 'ROUTE_NOT_FOUND', 'Unknown route');
   }
 
   void _search(HttpRequest request) {
     final rawQuery = request.uri.queryParameters['q'];
     if (rawQuery == null) {
-      _error(request, 400, 'QUERY_REQUIRED');
+      _error(request, 400, 'INVALID_PARAMETER', 'q is required');
       return;
     }
     final query = rawQuery.trim();
     if (query.isEmpty || query.runes.length > 200) {
-      _error(request, 400, 'INVALID_QUERY');
+      _error(
+        request,
+        400,
+        'INVALID_PARAMETER',
+        'q must contain 1 to 200 characters',
+      );
       return;
     }
     final pagination = _pagination(request);
@@ -200,12 +214,12 @@ class ReferenceSourceServer {
     final category = request.uri.queryParameters['category'];
     if (category != null &&
         (!_validId(category) || !categoryDefinitions.containsKey(category))) {
-      _error(request, 400, 'INVALID_CATEGORY');
+      _error(request, 400, 'INVALID_PARAMETER', 'Unknown category');
       return;
     }
     final sort = request.uri.queryParameters['sort'] ?? 'latest';
     if (sort != 'latest' && sort != 'popular') {
-      _error(request, 400, 'INVALID_SORT');
+      _error(request, 400, 'INVALID_PARAMETER', 'Unsupported sort value');
       return;
     }
     final pagination = _pagination(request);
@@ -246,7 +260,11 @@ class ReferenceSourceServer {
   }
 
   void _catalog(HttpRequest request, BookData book) {
-    final pagination = _pagination(request, defaultPageSize: 100);
+    final pagination = _pagination(
+      request,
+      defaultPageSize: 100,
+      maxPageSize: maxCatalogPageSize,
+    );
     if (pagination == null) return;
     final chapters = [...book.chapters]
       ..sort((a, b) {
@@ -265,7 +283,11 @@ class ReferenceSourceServer {
     });
   }
 
-  Pagination? _pagination(HttpRequest request, {int defaultPageSize = 20}) {
+  Pagination? _pagination(
+    HttpRequest request, {
+    int defaultPageSize = 20,
+    int maxPageSize = 100,
+  }) {
     final pageText = request.uri.queryParameters['page'];
     final pageSizeText = request.uri.queryParameters['pageSize'];
     final page = pageText == null ? 1 : int.tryParse(pageText);
@@ -273,11 +295,16 @@ class ReferenceSourceServer {
         ? defaultPageSize
         : int.tryParse(pageSizeText);
     if (page == null || page < 1) {
-      _error(request, 400, 'INVALID_PAGE');
+      _error(request, 400, 'INVALID_PARAMETER', 'page must be at least 1');
       return null;
     }
-    if (pageSize == null || pageSize < 1 || pageSize > 100) {
-      _error(request, 400, 'INVALID_PAGE_SIZE');
+    if (pageSize == null || pageSize < 1 || pageSize > maxPageSize) {
+      _error(
+        request,
+        400,
+        'INVALID_PARAMETER',
+        'pageSize must be between 1 and $maxPageSize',
+      );
       return null;
     }
     return Pagination(page, pageSize);
@@ -294,15 +321,12 @@ class ReferenceSourceServer {
   void _error(
     HttpRequest request,
     int status,
-    String code, {
+    String code,
+    String message, {
     bool retryable = false,
   }) {
     _sendJson(request, status, {
-      'error': {
-        'code': code,
-        'message': code.replaceAll('_', ' '),
-        'retryable': retryable,
-      },
+      'error': {'code': code, 'message': message, 'retryable': retryable},
     }, cacheable: false);
   }
 
