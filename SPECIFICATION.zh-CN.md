@@ -1,0 +1,429 @@
+# 开放阅读书源协议 1.1
+
+[English normative specification](SPECIFICATION.md)
+
+状态：**候选草案**
+
+> 本文是 `SPECIFICATION.md` 的简体中文翻译，方便中文开发者理解和实现。
+> 英文原文是规范性文本；如果翻译与英文原文存在冲突，以英文原文为准。
+
+本文中的“必须（MUST）”“不得（MUST NOT）”“应当（SHOULD）”“不应当
+（SHOULD NOT）”和“可以（MAY）”按照 RFC 2119 与 RFC 8174 解释。
+
+## 1. 范围和设计目标
+
+开放阅读书源协议（Open Reading Source Protocol，ORSP）定义了阅读客户端与独立内容
+书源之间安全的 HTTP 边界。ORSP 1.1 包括：
+
+- 书源发现；
+- 书籍搜索与元数据；
+- 可选的推荐发现、分类和浏览；
+- 章节目录；
+- 章节正文获取。
+
+ORSP 1.1 面向不要求用户认证的公开 HTTP(S) 书源。它不定义可执行的抓取规则。书源可以
+在服务端内部使用已获授权的适配器，但客户端只能接收本协议定义的数据。
+
+核心阅读配置应保持精简。符合 ORSP 1.1 的书源必须完整实现发现、搜索、详情、目录和正文
+链路。可选功能通过能力标识声明，不得改变核心字段或接口的含义。
+
+## 2. 协议版本与演进
+
+协议版本使用 `主版本.次版本`，例如 `1.0`。它不是软件包的语义化版本号，不得包含修订号。
+
+- 主版本可以引入不兼容变更；
+- 次版本可以新增可选对象字段、可选能力标识、可选接口，或增加具有明确回退规则的枚举值；
+- 次版本不得删除或重新解释现有字段，不得把可选字段改为必填字段，也不得改变现有 HTTP
+  状态码的含义。
+
+实现 ORSP 1.x 的客户端应当接受主版本为 `1` 的发现文档。只有当所有 1.x 实现都遵守本文
+规定的向前兼容规则时，这种行为才是安全的。
+
+客户端必须忽略未知的 JSON 对象字段和未知的可选能力标识。书源不得要求客户端理解某个
+扩展能力，才能完成核心阅读配置中的发现、搜索、详情、目录或正文操作。
+
+字段缺失与字段值为 `null` 是不同的状态。无法提供可选字段时，书源必须省略该字段。除非
+Schema 明确允许，否则书源不得返回 `null`。
+
+## 3. 书源发现
+
+书源必须在站点根路径提供 JSON 发现文档：
+
+```text
+/.well-known/open-reading-source.json
+```
+
+客户端也可以接受用户或书源目录提供的完整发现文档 URL。重定向规则见第 5 节。
+
+发现文档必填字段：
+
+| 字段 | 要求 |
+| --- | --- |
+| `protocol` | 必须等于 `open-reading-source` |
+| `protocolVersion` | ORSP `主版本.次版本`；本文使用 `1.1` |
+| `id` | 稳定且全局唯一的书源标识 |
+| `name` | 面向用户的书源名称 |
+| `apiBaseUrl` | 以 `/` 结尾的绝对 HTTP(S) URL |
+| `capabilities` | 必须包含全部四项核心能力 |
+
+四项核心能力是 `search`、`detail`、`catalog` 和 `content`。
+
+ORSP 1.1 定义三项可选的标准能力：
+
+| 能力 | 接口关系 | 用途 |
+| --- | --- | --- |
+| `discover` | `v1/discover` | 推荐、热门等策划书架 |
+| `categories` | `v1/categories` | 稳定的分类 ID 和显示名称 |
+| `browse` | `v1/browse` | 按分类或标准排序分页浏览 |
+
+声明 `categories` 的书源必须同时声明 `browse`，因为分类 ID 用于浏览接口。书源可以只声明
+`browse` 而不声明 `categories`，例如只提供最新更新列表。这些能力都是可选的；缺少它们
+不得影响核心搜索和阅读能力。
+
+扩展能力必须使用防冲突命名空间，格式为 `反向域名:名称`，例如
+`org.example:audio`。除非由后续 ORSP 规范定义，否则扩展不得使用 `orsp` 命名空间。
+客户端遇到未知扩展能力时，不得因此判定书源不兼容。
+
+发现文档的可选字段包括 `description`、`iconUrl`、`websiteUrl` 和 `languages`。
+语言必须使用 BCP 47 标签，例如 `en`、`zh-CN` 或 `sr-Latn`。
+
+`apiBaseUrl` 不得包含用户名、密码、查询参数或片段，并且必须以 `/` 结尾。本文接口路径
+相对于该 URL 解析。例如，API 基础地址为 `https://books.example/api/`，接口关系为
+`v1/search`，最终地址就是 `https://books.example/api/v1/search`。
+
+书源 `id` 长度必须为 3 至 200 个字符，首尾必须是 ASCII 字母或数字，中间只能包含
+ASCII 字母、数字、`.`、`_` 或 `-`。书源更换域名、API 地址或显示名称时不得修改 `id`。
+推荐使用反向域名形式。书源 ID 只标识书源；书籍和章节 ID 的作用域是该书源。
+
+发现文档的机器定义见
+[`schemas/discovery.schema.json`](schemas/discovery.schema.json)。
+
+## 4. 数据模型与编码
+
+### 4.1 JSON 和文本
+
+- 请求和响应必须使用 UTF-8；
+- JSON 响应必须使用 `application/json`，允许 `charset=utf-8` 等媒体类型参数；
+- JSON 字段名区分大小写；
+- 客户端必须忽略任意嵌套层级的未知对象字段；
+- 书源应当把面向用户的文本规范化为 Unicode NFC；
+- 时间戳必须是 RFC 3339 `date-time`，推荐使用带 `Z` 后缀的 UTC 时间。
+
+### 4.2 标识符
+
+书籍和章节 ID 是稳定、不透明的字符串。为了让常见 HTTP 框架产生一致的路由行为，线上
+传输的 ID 只能使用 RFC 3986 非保留 ASCII 字符：字母、数字、`-`、`.`、`_` 和 `~`。
+
+ID 长度必须为 1 至 200 个字符。客户端必须把每个 ID 当作一个 URL 路径段处理，不得从
+中推断层级或其他含义。书源不得把已经使用过的 ID 分配给另一个逻辑资源。
+
+章节 ID 在一本书内唯一；书籍 ID 在一个书源内唯一。
+
+### 4.3 URL
+
+除非字段另有说明，JSON 中的 URL 必须是绝对 HTTP(S) URL。客户端必须拒绝不支持的 URL
+scheme，并应当在下载封面或其他远程资源前应用平台相关的大小限制。
+
+### 4.4 枚举
+
+对于包含 `unknown` 的描述性枚举，客户端遇到未知值时必须回退为 `unknown`。对于
+`contentType` 等决定处理方式的枚举，客户端必须报告不支持该表示方式，不得猜测其含义。
+
+## 5. HTTP 行为
+
+- 核心接口使用 `GET`，并且必须是安全且幂等的；
+- 客户端应发送 `Accept: application/json`；
+- 客户端应通过 `X-Open-Reading-Protocol` 发送自己支持的最高 ORSP 1.x 版本，例如 `1.1`；
+- 书源可以通过同名响应头返回自己的协议版本；
+- 不支持的方法必须返回 `405 Method Not Allowed`，并应包含 `Allow` 响应头；
+- 对于较大的 JSON 响应，书源应支持 HTTP 压缩。
+
+客户端可以跟随重定向，但必须满足：
+
+- 每个请求最多跟随五次重定向；
+- 目标必须使用 HTTP(S)；
+- 生产客户端不应从 HTTPS 降级到 HTTP；
+- 不得向不同源转发凭据或私有请求头。
+
+客户端应设置可配置的连接时间、响应时间、解压后大小和重定向限制。所有书源响应都必须被
+视为不可信输入。
+
+### 5.1 缓存
+
+发现文档、推荐书架、分类、浏览页、详情、目录和正文响应应提供 `ETag`，或适当的
+`Cache-Control`/`Last-Modified` 响应头。客户端发送当前 `If-None-Match` 时，书源应返回
+无响应体的 `304 Not Modified`。
+
+实体标签标识完整的所选表示。只要响应发生客户端可见的变化，书源就必须更新实体标签。
+
+## 6. 搜索
+
+接口关系：
+
+```text
+GET v1/search?q={query}&page={page}&pageSize={pageSize}
+```
+
+去除首尾空白后，`q` 必填且长度必须为 1 至 200 个 Unicode 标量值。`page` 从 1 开始，
+默认值为 1。`pageSize` 默认值为 20，范围必须为 1 至 100。
+
+书源可以忽略未知查询参数；已知查询参数不合法时必须返回 `400`。
+
+响应示例：
+
+```json
+{
+  "items": [
+    {
+      "id": "book-1001",
+      "title": "示例书籍",
+      "author": "示例作者",
+      "description": "简短介绍",
+      "coverUrl": "https://books.example.org/covers/1001.jpg",
+      "categories": ["小说"],
+      "status": "completed",
+      "latestChapter": "第三十章",
+      "language": "zh-CN",
+      "updatedAt": "2026-07-11T10:00:00Z"
+    }
+  ],
+  "page": 1,
+  "pageSize": 20,
+  "total": 1,
+  "hasMore": false
+}
+```
+
+`items`、`page`、`pageSize` 和 `hasMore` 必填。`pageSize` 表示请求的页面容量，不是实际
+返回的条目数。部分书源无法高效计算总数，因此 `total` 可选。数据集和查询不变时，搜索
+排序应保持确定性。
+
+书籍对象必须包含 `id` 和 `title`，其他字段可选。`language` 必须是 BCP 47 标签。
+`status` 可取 `ongoing`、`completed`、`hiatus` 或 `unknown`。
+
+## 7. 推荐发现（可选）
+
+声明 `discover` 的书源必须实现：
+
+```text
+GET v1/discover
+```
+
+响应示例：
+
+```json
+{
+  "sections": [
+    {
+      "id": "featured",
+      "title": "推荐",
+      "items": [
+        {
+          "id": "book-1001",
+          "title": "示例书籍",
+          "author": "示例作者"
+        }
+      ]
+    }
+  ]
+}
+```
+
+`sections` 必填。每个分区必须包含 `id`、`title` 和 `items`。分区 ID 遵循第 4.2 节的
+不透明 ID 规则，作用域是当前书源，并应在显示名称改变时保持稳定。分区标题面向用户，
+可以按书源内容策略本地化。空分区应省略。
+
+每个分区最多包含 100 本书。书籍对象与搜索和详情使用同一模型。数据集不变时，分区顺序
+和书籍排序应保持确定性。除非书源明确记录相关行为，客户端不得把分区解释为个性化结果；
+ORSP 1.1 不定义用户认证或用户画像。
+
+## 8. 分类（可选）
+
+声明 `categories` 的书源必须实现：
+
+```text
+GET v1/categories
+```
+
+响应示例：
+
+```json
+{
+  "items": [
+    {"id": "fiction", "name": "小说"},
+    {"id": "history", "name": "历史"}
+  ]
+}
+```
+
+`items` 必填。分类 ID 遵循第 4.2 节的不透明 ID 规则，并且必须能够原样作为浏览接口的
+`category` 参数使用。分类名称面向用户。名称变化时，书源应保持 ID 稳定。数据集不变时，
+分类顺序应保持确定性。
+
+## 9. 浏览（可选）
+
+声明 `browse` 的书源必须实现：
+
+```text
+GET v1/browse?category={categoryId}&sort={sort}&page={page}&pageSize={pageSize}
+```
+
+`category` 可选。提供时长度必须为 1 至 200 个字符，并对应 `v1/categories` 返回的分类。
+未声明 `categories` 的书源在收到 `category` 参数时必须返回 `400`。
+
+`sort` 可选，默认值为 `latest`。ORSP 1.1 定义：
+
+- `latest`：按照书籍 `updatedAt` 降序排列；没有 `updatedAt` 的书排在有日期的书之后；
+- `popular`：由书源定义的热门排序；排名快照不变时必须保持确定性。
+
+不支持的排序值必须返回 `400`。`page` 和 `pageSize` 使用搜索接口的分页规则，响应使用
+搜索分页 Schema。省略 `category` 时，接口按照指定排序浏览书源中全部可见书籍。
+
+## 10. 书籍详情
+
+接口关系：
+
+```text
+GET v1/books/{bookId}
+```
+
+响应使用与搜索相同的书籍对象，可以包含更长的介绍或更多可选元数据。同一字段在搜索和
+详情响应中的含义必须一致。
+
+## 11. 章节目录
+
+接口关系：
+
+```text
+GET v1/books/{bookId}/chapters?page={page}&pageSize={pageSize}
+```
+
+`page` 默认值为 1。`pageSize` 默认值为 100，范围必须为 1 至 100。
+
+```json
+{
+  "items": [
+    {
+      "id": "chapter-1",
+      "title": "第一章",
+      "order": 1,
+      "updatedAt": "2026-07-11T10:00:00Z"
+    }
+  ],
+  "page": 1,
+  "pageSize": 100,
+  "total": 1,
+  "hasMore": false
+}
+```
+
+章节对象必须包含 `id`、`title` 和 `order`。`order` 是大于或等于零的整数。书源应在
+一本书内使用唯一的顺序值。顺序值相同时，客户端必须使用章节 ID 的升序作为第二排序键。
+
+目录页必须按照 `(order, id)` 排序。书源应为每个目录页提供 `ETag`。客户端加载多个页面
+时如果发现目录校验值发生变化，应重新加载目录，避免混合不同版本的数据。
+
+## 12. 章节正文
+
+接口关系：
+
+```text
+GET v1/books/{bookId}/chapters/{chapterId}
+```
+
+```json
+{
+  "bookId": "book-1001",
+  "chapterId": "chapter-1",
+  "title": "第一章",
+  "contentType": "text/plain",
+  "content": "章节正文",
+  "baseUrl": "https://books.example.org/books/book-1001/"
+}
+```
+
+`bookId` 和 `chapterId` 必须与请求的资源完全一致。`baseUrl` 可选；提供时必须是绝对
+HTTP(S) URL。
+
+ORSP 1.1 支持以下正文类型：
+
+- `text/plain`；
+- `text/markdown`，按照 CommonMark 解释；
+- `text/html`，内容必须是 HTML 片段而不是完整文档。
+
+相对链接和图片地址优先相对于 `baseUrl` 解析；没有 `baseUrl` 时，相对于最终章节请求
+URL 解析。
+
+HTML 不得包含脚本或其他可执行内容。书源应移除事件处理属性、危险 URL scheme、内嵌
+框架和活动表单控件。客户端仍然必须在渲染前清理 HTML。Markdown 内嵌 HTML 适用相同规则。
+
+## 13. 错误
+
+核心状态码：
+
+| 状态码 | 含义 |
+| --- | --- |
+| `304` | 所选表示没有变化 |
+| `400` | 请求参数或 ID 不合法 |
+| `404` | 书籍、章节或路由不存在 |
+| `405` | 不支持该 HTTP 方法 |
+| `429` | 请求过于频繁；应包含 `Retry-After` |
+| `500` | 书源内部错误 |
+| `503` | 书源暂时不可用；可以包含 `Retry-After` |
+
+除不能包含响应体的响应外，错误响应必须使用：
+
+```json
+{
+  "error": {
+    "code": "BOOK_NOT_FOUND",
+    "message": "The requested book does not exist",
+    "retryable": false,
+    "requestId": "request-7f3a"
+  }
+}
+```
+
+`code` 和 `message` 必填。错误码必须由稳定的大写 ASCII 单词组成，并使用下划线分隔。
+`message` 面向开发和诊断，客户端不应假定它已经本地化。`retryable` 和 `requestId` 可选。
+客户端必须忽略未知错误字段和未知错误码。
+
+错误响应不得包含凭据、Cookie、内部 URL、堆栈信息或其他敏感实现细节。
+
+## 14. 安全与隐私
+
+书源必须校验已知查询参数和 ID，并应限制请求频率、响应大小、执行时间和上游抓取行为。
+生产书源应使用 HTTPS。
+
+客户端接受用户或目录提供的书源 URL 时，应防御 SSRF、DNS 重绑定、环回或私网访问、
+重定向循环、解压炸弹和超大图片或正文。是否允许私网书源属于客户端策略，应明确告知用户。
+
+面向 Web 的书源需要设置合适的 CORS 策略；原生客户端不要求 CORS。
+
+ORSP 不授予任何版权或访问权限。书源运营者必须只提供自己有权分发的内容。
+
+## 15. 一致性认证
+
+声称符合 `ORSP 1.1 Core Reading` 的实现必须：
+
+1. 实现发现和全部四项核心能力；
+2. 满足本文的规范性要求；
+3. 通过所声明版本的官方核心一致性测试；
+4. 单独披露可选扩展能力。
+
+声称符合 `ORSP 1.1 Discovery` 的实现还必须实现并声明 `discover`、`categories` 和
+`browse`，并通过官方发现配置检查。书源可以只实现部分可选标准能力，但不得因此声称
+符合完整 Discovery 配置。
+
+仅通过 JSON 或 YAML 语法验证不能证明协议兼容。测试报告应记录测试套件版本和执行时间。
+
+## 16. 保留的未来工作
+
+以下功能不属于 ORSP 1.1，需要后续次版本、主版本或配套规范：
+
+- 用户认证和付费内容授权；
+- 游标分页和增量目录同步；
+- 离线包与下载清单；
+- 书源健康与目录协议；
+- 音频和其他媒体表示；
+- 批注、高亮和阅读进度同步。

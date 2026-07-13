@@ -1,36 +1,36 @@
-name: Report a registry source
-description: Report availability, security, maintenance, abuse, or rights concerns
-title: "[Source report]: "
+name: 举报或反馈书源 / Report a registry source
+description: 反馈可用性、安全、维护、滥用或内容权利问题
+title: "[书源反馈 / Source report]: "
 labels: [registry, source-report]
 body:
   - type: input
     id: source_id
     attributes:
-      label: Source ID
+      label: 书源 ID / Source ID
       placeholder: org.example.public-books
     validations:
       required: true
   - type: dropdown
     id: category
     attributes:
-      label: Category
+      label: 问题类型 / Category
       options:
-        - Availability or compatibility
-        - Security or malicious behavior
-        - Maintainer or ownership
-        - Copyright or content rights
-        - Incorrect registry metadata
+        - 可用性或兼容性 / Availability or compatibility
+        - 安全或恶意行为 / Security or malicious behavior
+        - 维护者或所有权 / Maintainer or ownership
+        - 版权或内容权利 / Copyright or content rights
+        - Registry 信息错误 / Incorrect registry metadata
     validations:
       required: true
   - type: textarea
     id: evidence
     attributes:
-      label: Evidence
-      description: Include dates, requests, responses, and public references. Do not post secrets.
+      label: 证据 / Evidence
+      description: 请提供日期、请求、响应和公开资料，不要发布密码、Token 或其他秘密。
     validations:
       required: true
   - type: textarea
     id: requested_action
     attributes:
-      label: Requested action
-      description: Explain whether you are requesting correction, warning, suspension, or removal.
+      label: 希望采取的措施 / Requested action
+      description: 请说明希望更正、警告、暂停还是下架该书源。

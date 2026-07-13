@@ -1,5 +1,7 @@
 # ORSP Community Source Registry
 
+[简体中文](README.zh-CN.md)
+
 This directory is the initial community registry for public ORSP sources. It is
 a discovery and moderation layer, not a replacement for the ORSP wire protocol.
 

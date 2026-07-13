@@ -2,9 +2,11 @@
 
 **English** · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) ·
 [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) ·
-[Specification](SPECIFICATION.md) · [OpenAPI](openapi.yaml) ·
+[Specification](SPECIFICATION.md) · [中文规范](SPECIFICATION.zh-CN.md) ·
+[OpenAPI](openapi.yaml) ·
 [Governance](GOVERNANCE.md) · [Ecosystem](ECOSYSTEM.md) ·
-[Community Registry](registry/README.md)
+[Community Registry](registry/README.md) ·
+[中文书源目录](registry/README.zh-CN.md)
 
 Open Reading Source Protocol (ORSP) is an open HTTP contract for connecting
 reading applications to independent book and serial-content providers.

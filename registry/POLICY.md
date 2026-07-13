@@ -1,5 +1,7 @@
 # Registry Review and Removal Policy
 
+[简体中文](POLICY.zh-CN.md)
+
 ## Scope
 
 The registry lists public ORSP sources that implement the complete Core Reading

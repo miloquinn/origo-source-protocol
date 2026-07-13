@@ -1,5 +1,7 @@
 # ORSP Ecosystem Architecture
 
+[简体中文](ECOSYSTEM.zh-CN.md)
+
 ORSP separates three concerns so the community can grow without making readers
 unsafe or the wire protocol unstable.
 

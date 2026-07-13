@@ -1,5 +1,7 @@
 # ORSP Governance
 
+[简体中文](GOVERNANCE.zh-CN.md)
+
 ORSP is developed as an open interoperability standard. The protocol belongs
 to its implementers and users rather than to one reader, source, registry, or
 company.

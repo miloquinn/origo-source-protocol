@@ -1,5 +1,7 @@
 # Contributing
 
+[简体中文](CONTRIBUTING.zh-CN.md)
+
 Thank you for helping improve Open Reading Source Protocol.
 
 Read [GOVERNANCE.md](GOVERNANCE.md) before proposing a protocol change. ORSP

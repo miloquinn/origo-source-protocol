@@ -1,5 +1,7 @@
 # Open Reading Source Protocol 1.1
 
+[简体中文翻译](SPECIFICATION.zh-CN.md)
+
 Status: **Candidate draft**
 
 The key words MUST, MUST NOT, REQUIRED, SHOULD, SHOULD NOT, and MAY in this

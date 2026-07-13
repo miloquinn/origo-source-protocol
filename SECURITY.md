@@ -1,5 +1,7 @@
 # Security Policy
 
+[简体中文](SECURITY.zh-CN.md)
+
 Please do not open public issues for vulnerabilities that could expose user
 data, credentials, private source URLs, or content-provider infrastructure.
 

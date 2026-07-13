@@ -2,9 +2,9 @@
 
 [English](README.md) · **简体中文** · [繁體中文](README.zh-TW.md) ·
 [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) ·
-[协议规范](SPECIFICATION.md) · [OpenAPI](openapi.yaml) ·
-[治理机制](GOVERNANCE.md) · [生态架构](ECOSYSTEM.md) ·
-[社区书源目录](registry/README.md)
+[协议规范](SPECIFICATION.zh-CN.md) · [OpenAPI](openapi.yaml) ·
+[治理机制](GOVERNANCE.zh-CN.md) · [生态架构](ECOSYSTEM.zh-CN.md) ·
+[社区书源目录](registry/README.zh-CN.md)
 
 Open Reading Source Protocol（ORSP，开放阅读书源协议）是一套用于连接阅读应用与
 独立内容服务的开放 HTTP 协议。它让不同书源以统一方式提供搜索、书籍详情、章节目录
@@ -75,7 +75,7 @@ GET {apiBaseUrl}v1/browse?category={categoryId}&sort=latest&page=1&pageSize=20
 这些相对路径必须基于发现文档中的 `apiBaseUrl` 解析。ORSP 1.1 Core Reading 书源必须
 实现全部四项核心能力；发现、分类和浏览按能力声明启用，旧的 1.0 书源无需修改也可以
 继续搜索和阅读。完整字段与错误处理要求请阅读
-[协议规范](SPECIFICATION.md)，接口模型可查看 [OpenAPI 3.1 文档](openapi.yaml)。
+[协议规范](SPECIFICATION.zh-CN.md)，接口模型可查看 [OpenAPI 3.1 文档](openapi.yaml)。
 
 ## 快速运行测试书源
 
@@ -119,13 +119,14 @@ HTML 正文应被视为不可信输入，客户端在渲染前应进行清理。
 ```text
 SPECIFICATION.md                规范性协议说明
 OEP-0001-discovery.md           ORSP 1.1 发现能力提案与兼容性分析
+SPECIFICATION.zh-CN.md          简体中文协议翻译
 openapi.yaml                    OpenAPI 3.1 接口定义
 schemas/discovery.schema.json   发现文档 JSON Schema
 examples/dart_server.dart       可运行的 Dart 参考书源
 examples/open-reading-source.json 发现文档示例
 tool/conformance_test.dart      端到端核心一致性测试
-GOVERNANCE.md                   协议变更与发布治理
-ECOSYSTEM.md                    适配器与联邦书源目录架构
+GOVERNANCE.zh-CN.md             协议变更与发布治理
+ECOSYSTEM.zh-CN.md              适配器与联邦书源目录架构
 registry/                       基于 PR 的社区书源目录
 ```
 
@@ -145,9 +146,9 @@ dart run tool/conformance_test.dart
 
 传统书源格式应通过服务端适配器转换成 ORSP，而不是把抓取脚本下发给阅读器。社区可以
 运营多个联邦式书源目录，目录负责发现、健康状态和信任信息，但不能重新定义通信协议。
-详细边界参见 [ECOSYSTEM.md](ECOSYSTEM.md)。
+详细边界参见 [ECOSYSTEM.zh-CN.md](ECOSYSTEM.zh-CN.md)。
 
-书源维护者可以通过 Pull Request 加入[社区书源目录](registry/README.md)。每个书源使用
+书源维护者可以通过 Pull Request 加入[社区书源目录](registry/README.zh-CN.md)。每个书源使用
 一个独立 Manifest 文件，CI 会检查格式、ID、公网地址安全和完整阅读链路，然后生成供
 阅读器订阅的统一索引。
 
@@ -164,4 +165,4 @@ ORSP 面向原创内容、公共领域内容以及已获得合法授权的内容
 欢迎提交问题、兼容性反馈、协议改进建议、其他语言的参考实现和文档翻译。协议变更应
 同时说明兼容性、安全、隐私和版权影响，并更新相关规范、Schema 或示例。
 
-详细流程参见 [CONTRIBUTING.md](CONTRIBUTING.md)。本仓库采用 [MIT](LICENSE) 许可。
+详细流程参见 [CONTRIBUTING.zh-CN.md](CONTRIBUTING.zh-CN.md)。本仓库采用 [MIT](LICENSE) 许可。
