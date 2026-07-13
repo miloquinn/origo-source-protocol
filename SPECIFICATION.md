@@ -1,6 +1,6 @@
-# Open Reading Source Protocol 1.0
+# Open Reading Source Protocol 1.1
 
-Status: **Stabilization draft**
+Status: **Candidate draft**
 
 The key words MUST, MUST NOT, REQUIRED, SHOULD, SHOULD NOT, and MAY in this
 document are to be interpreted as described in RFC 2119 and RFC 8174 when, and
@@ -9,18 +9,19 @@ only when, they appear in all capitals.
 ## 1. Scope and design goals
 
 Open Reading Source Protocol (ORSP) defines a safe HTTP boundary between a
-reading client and an independently operated content source. ORSP 1.0 covers:
+reading client and an independently operated content source. ORSP 1.1 covers:
 
 - source discovery;
 - book search and metadata;
+- optional curated discovery, categories, and browsing;
 - chapter catalogs;
 - chapter content retrieval.
 
-ORSP 1.0 covers public HTTP(S) sources that do not require user authentication.
+ORSP 1.1 covers public HTTP(S) sources that do not require user authentication.
 It does not define executable scraping rules. A source MAY use an authorized
 adapter internally, but clients only receive data described by this protocol.
 
-The core reading profile is intentionally small. A conforming ORSP 1.0 source
+The core reading profile is intentionally small. A conforming ORSP 1.1 source
 MUST implement the complete discovery, search, detail, catalog, and content
 path. Optional features are advertised as capabilities and MUST NOT change the
 meaning of core fields or endpoints.
@@ -64,13 +65,27 @@ Required discovery members:
 | Member | Requirement |
 | --- | --- |
 | `protocol` | MUST equal `open-reading-source` |
-| `protocolVersion` | ORSP `MAJOR.MINOR`; this specification uses `1.0` |
+| `protocolVersion` | ORSP `MAJOR.MINOR`; this specification uses `1.1` |
 | `id` | Stable globally unique source identifier |
 | `name` | Human-readable source name |
 | `apiBaseUrl` | Absolute HTTP(S) URL ending in `/` |
 | `capabilities` | MUST contain all four core capability tokens |
 
 Core capability tokens are `search`, `detail`, `catalog`, and `content`.
+
+ORSP 1.1 defines three optional standard capability tokens:
+
+| Capability | Endpoint relation | Purpose |
+| --- | --- | --- |
+| `discover` | `v1/discover` | Curated shelves such as featured or popular books |
+| `categories` | `v1/categories` | Stable category identifiers and display names |
+| `browse` | `v1/browse` | Paginated browsing by category or standard sort |
+
+A source declaring `categories` MUST also declare `browse`, because category
+identifiers are defined for use with the browse endpoint. A source MAY declare
+`browse` without `categories`, for example to expose only a latest-updates
+feed. These capabilities are optional: their absence MUST NOT affect core
+search or reading behavior.
 
 Extension capability tokens MUST use a collision-resistant namespace in the
 form `reverse.domain:name`, for example `org.example:audio`. An extension token
@@ -138,7 +153,7 @@ how to interpret it.
 - Core endpoints use `GET` and MUST be safe and idempotent.
 - Clients SHOULD send `Accept: application/json`.
 - Clients SHOULD send `X-Open-Reading-Protocol` with their highest supported
-  ORSP 1.x version, for example `1.0`.
+  ORSP 1.x version, for example `1.1`.
 - Sources MAY return `X-Open-Reading-Protocol` containing the source protocol
   version.
 - Unsupported methods MUST return `405 Method Not Allowed` and SHOULD include
@@ -158,10 +173,11 @@ untrusted input.
 
 ### 5.1 Caching
 
-Discovery, detail, catalog, and content responses SHOULD provide an `ETag` or
-appropriate `Cache-Control`/`Last-Modified` headers. When a client sends
-`If-None-Match` with a current entity tag, a source SHOULD return `304 Not
-Modified` with no response body.
+Discovery documents, discovery shelves, categories, browse pages, detail,
+catalog, and content responses SHOULD provide an `ETag` or appropriate
+`Cache-Control`/`Last-Modified` headers. When a client sends `If-None-Match`
+with a current entity tag, a source SHOULD return `304 Not Modified` with no
+response body.
 
 An entity tag identifies the complete selected representation. Sources MUST
 change it when a response changes in a way visible to a client.
@@ -215,7 +231,95 @@ Book objects MUST include `id` and `title`. Other members are optional.
 `language`, when present, MUST be a BCP 47 tag. `status` is one of `ongoing`,
 `completed`, `hiatus`, or `unknown`.
 
-## 7. Book details
+## 7. Curated discovery (optional)
+
+Sources declaring `discover` MUST implement:
+
+```text
+GET v1/discover
+```
+
+Response:
+
+```json
+{
+  "sections": [
+    {
+      "id": "featured",
+      "title": "Featured",
+      "items": [
+        {
+          "id": "book-1001",
+          "title": "Example Book",
+          "author": "Example Author"
+        }
+      ]
+    }
+  ]
+}
+```
+
+`sections` is required. Each section MUST contain `id`, `title`, and `items`.
+Section IDs follow the opaque wire-ID rules in Section 4.2, are scoped to the
+source, and SHOULD remain stable when the display title changes. Section titles
+are human-readable and MAY be localized according to the source's content
+policy. Empty sections SHOULD be omitted.
+
+Each section MAY contain at most 100 books. Book objects use the same model as
+search and detail. Section ordering and item ranking are source-defined but
+SHOULD be deterministic for an unchanged dataset. Clients MUST NOT interpret a
+section as personalized unless the source explicitly documents that behavior;
+ORSP 1.1 does not define authentication or user profiles.
+
+## 8. Categories (optional)
+
+Sources declaring `categories` MUST implement:
+
+```text
+GET v1/categories
+```
+
+Response:
+
+```json
+{
+  "items": [
+    {"id": "fiction", "name": "Fiction"},
+    {"id": "history", "name": "History"}
+  ]
+}
+```
+
+`items` is required. Category IDs follow the opaque wire-ID rules in Section
+4.2 and MUST be accepted unchanged as the `category` browse parameter.
+Category names are human-readable. Sources SHOULD keep IDs stable when names
+change. Category ordering is source-defined and SHOULD be deterministic.
+
+## 9. Browse (optional)
+
+Sources declaring `browse` MUST implement:
+
+```text
+GET v1/browse?category={categoryId}&sort={sort}&page={page}&pageSize={pageSize}
+```
+
+`category` is optional. When present it MUST contain between 1 and 200
+characters and identify a category returned by `v1/categories`. A source that
+does not declare `categories` MUST return `400` if `category` is supplied.
+
+`sort` is optional and defaults to `latest`. ORSP 1.1 defines:
+
+- `latest`: descending by the book's `updatedAt`, with books lacking
+  `updatedAt` ordered after dated books;
+- `popular`: source-defined popularity ranking, deterministic for an unchanged
+  ranking snapshot.
+
+Sources MUST return `400` for an unsupported sort value. `page` and `pageSize`
+use the search pagination rules. The response uses the search-page schema.
+When `category` is omitted, the endpoint browses all books visible to the
+source under the selected sort.
+
+## 10. Book details
 
 Endpoint relation:
 
@@ -227,7 +331,7 @@ The response uses the same book object as search and MAY provide a longer
 description or additional optional metadata. Existing member meanings MUST be
 identical in search and detail responses.
 
-## 8. Chapter catalog
+## 11. Chapter catalog
 
 Endpoint relation:
 
@@ -263,7 +367,7 @@ Catalog pages MUST be sorted by `(order, id)`. A source SHOULD return an `ETag`
 for each catalog page. A client that observes a changed catalog validator while
 loading multiple pages SHOULD restart catalog loading to avoid a mixed view.
 
-## 9. Chapter content
+## 12. Chapter content
 
 Endpoint relation:
 
@@ -285,7 +389,7 @@ GET v1/books/{bookId}/chapters/{chapterId}
 `bookId` and `chapterId` MUST exactly match the requested resource. `baseUrl` is
 optional and, when present, MUST be an absolute HTTP(S) URL.
 
-ORSP 1.0 content types are:
+ORSP 1.1 content types are:
 
 - `text/plain`;
 - `text/markdown`, interpreted as CommonMark;
@@ -299,7 +403,7 @@ remove event-handler attributes, dangerous URL schemes, embedded frames, and
 active form controls. Clients MUST still sanitize HTML before rendering it.
 Raw HTML embedded in Markdown MUST receive the same treatment.
 
-## 10. Errors
+## 13. Errors
 
 Core status codes:
 
@@ -334,7 +438,7 @@ optional. Clients MUST ignore unknown error members and unknown error codes.
 Sources MUST NOT include credentials, cookies, internal URLs, stack traces, or
 other sensitive implementation details in error responses.
 
-## 11. Security and privacy
+## 14. Security and privacy
 
 Sources MUST validate known query parameters and IDs and SHOULD impose rate,
 response-size, execution-time, and upstream-fetch limits. Production sources
@@ -352,21 +456,27 @@ required for native clients.
 ORSP does not grant copyright or access rights. Source operators are
 responsible for distributing only content they are authorized to provide.
 
-## 12. Conformance
+## 15. Conformance
 
-An implementation claiming `ORSP 1.0 Core Reading` conformance MUST:
+An implementation claiming `ORSP 1.1 Core Reading` conformance MUST:
 
 1. implement discovery and all four core capabilities;
 2. satisfy the normative requirements in this document;
 3. pass the official core conformance suite for the claimed version;
 4. disclose optional extension capabilities separately.
 
+An implementation claiming `ORSP 1.1 Discovery` conformance MUST additionally
+implement and advertise `discover`, `categories`, and `browse`, and pass the
+official discovery-profile checks. A source MAY implement only a subset of the
+optional standard capabilities without claiming the complete Discovery
+profile.
+
 Passing syntax validation alone is not evidence of protocol conformance.
 Conformance reports SHOULD record the test-suite version and execution date.
 
-## 13. Reserved future work
+## 16. Reserved future work
 
-The following features are intentionally outside ORSP 1.0 and require a future
+The following features are intentionally outside ORSP 1.1 and require a future
 minor version, major version, or companion specification:
 
 - authentication and paid-content authorization;

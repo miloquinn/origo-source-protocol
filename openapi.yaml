@@ -1,14 +1,82 @@
 openapi: 3.1.0
 info:
   title: Open Reading Source Protocol
-  version: '1.0'
-  description: Machine-readable contract for the ORSP 1.0 Core Reading profile.
+  version: '1.1'
+  description: Machine-readable contract for ORSP 1.1 Core Reading and optional Discovery profiles.
   license:
     name: MIT
     identifier: MIT
 servers:
   - url: https://books.example.org/api
 paths:
+  /v1/discover:
+    get:
+      operationId: discoverBooks
+      summary: Get curated discovery shelves
+      parameters:
+        - $ref: '#/components/parameters/ProtocolVersion'
+      responses:
+        '200':
+          description: Curated discovery shelves
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DiscoveryPage' }
+        '304': { $ref: '#/components/responses/NotModified' }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /v1/categories:
+    get:
+      operationId: listCategories
+      summary: List browseable categories
+      parameters:
+        - $ref: '#/components/parameters/ProtocolVersion'
+      responses:
+        '200':
+          description: Source-defined categories
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CategoryPage' }
+        '304': { $ref: '#/components/responses/NotModified' }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /v1/browse:
+    get:
+      operationId: browseBooks
+      summary: Browse books by category or standard sort
+      parameters:
+        - $ref: '#/components/parameters/ProtocolVersion'
+        - name: category
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/OpaqueId' }
+        - name: sort
+          in: query
+          required: false
+          schema: { type: string, enum: [latest, popular], default: latest }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Browse results
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SearchPage' }
+        '304': { $ref: '#/components/responses/NotModified' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
   /v1/search:
     get:
       operationId: searchBooks
@@ -226,6 +294,40 @@ components:
         pageSize: { type: integer, minimum: 1, maximum: 100 }
         total: { type: integer, minimum: 0 }
         hasMore: { type: boolean }
+    DiscoveryPage:
+      type: object
+      additionalProperties: true
+      required: [sections]
+      properties:
+        sections:
+          type: array
+          items: { $ref: '#/components/schemas/DiscoverySection' }
+    DiscoverySection:
+      type: object
+      additionalProperties: true
+      required: [id, title, items]
+      properties:
+        id: { $ref: '#/components/schemas/OpaqueId' }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        items:
+          type: array
+          maxItems: 100
+          items: { $ref: '#/components/schemas/Book' }
+    CategoryPage:
+      type: object
+      additionalProperties: true
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Category' }
+    Category:
+      type: object
+      additionalProperties: true
+      required: [id, name]
+      properties:
+        id: { $ref: '#/components/schemas/OpaqueId' }
+        name: { type: string, minLength: 1, maxLength: 200 }
     Chapter:
       type: object
       additionalProperties: true

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-const protocolVersion = '1.0';
+const protocolVersion = '1.1';
 final _opaqueIdPattern = RegExp(r'^[A-Za-z0-9._~-]{1,200}$');
 
 class ReferenceSourceServer {
@@ -66,8 +66,28 @@ class ReferenceSourceServer {
         'description': 'Original sample content for protocol development.',
         'apiBaseUrl': baseUri.resolve('api/').toString(),
         'languages': ['zh-CN', 'en'],
-        'capabilities': ['search', 'detail', 'catalog', 'content'],
+        'capabilities': [
+          'search',
+          'discover',
+          'categories',
+          'browse',
+          'detail',
+          'catalog',
+          'content',
+        ],
       });
+      return;
+    }
+    if (path == '/api/v1/discover') {
+      _discover(request);
+      return;
+    }
+    if (path == '/api/v1/categories') {
+      _categories(request);
+      return;
+    }
+    if (path == '/api/v1/browse') {
+      _browse(request);
       return;
     }
     if (path == '/api/v1/search') {
@@ -149,6 +169,75 @@ class ReferenceSourceServer {
     final pageItems = _page(matches, pagination);
     _sendJson(request, 200, {
       'items': pageItems,
+      'page': pagination.page,
+      'pageSize': pagination.pageSize,
+      'total': matches.length,
+      'hasMore': pagination.end < matches.length,
+    });
+  }
+
+  void _discover(HttpRequest request) {
+    final items = books.values.map((book) => book.metadata).toList();
+    final latest = [...items]
+      ..sort((a, b) => '${b['updatedAt']}'.compareTo('${a['updatedAt']}'));
+    _sendJson(request, 200, {
+      'sections': [
+        {'id': 'featured', 'title': 'Featured', 'items': items},
+        {'id': 'latest', 'title': 'Latest updates', 'items': latest},
+      ],
+    });
+  }
+
+  void _categories(HttpRequest request) {
+    _sendJson(request, 200, {
+      'items': categoryDefinitions.entries
+          .map((entry) => {'id': entry.key, 'name': entry.value})
+          .toList(),
+    });
+  }
+
+  void _browse(HttpRequest request) {
+    final category = request.uri.queryParameters['category'];
+    if (category != null &&
+        (!_validId(category) || !categoryDefinitions.containsKey(category))) {
+      _error(request, 400, 'INVALID_CATEGORY');
+      return;
+    }
+    final sort = request.uri.queryParameters['sort'] ?? 'latest';
+    if (sort != 'latest' && sort != 'popular') {
+      _error(request, 400, 'INVALID_SORT');
+      return;
+    }
+    final pagination = _pagination(request);
+    if (pagination == null) return;
+
+    final matches = books.values.where((book) {
+      if (category == null) return true;
+      final categoryName = categoryDefinitions[category];
+      final values = book.metadata['categories'];
+      return values is List && values.contains(categoryName);
+    }).toList();
+    matches.sort((a, b) {
+      if (sort == 'popular') {
+        final left = bookPopularity[a.metadata['id']] ?? 0;
+        final right = bookPopularity[b.metadata['id']] ?? 0;
+        final byPopularity = right.compareTo(left);
+        if (byPopularity != 0) return byPopularity;
+      } else {
+        final byUpdated = '${b.metadata['updatedAt']}'.compareTo(
+          '${a.metadata['updatedAt']}',
+        );
+        if (byUpdated != 0) return byUpdated;
+      }
+      return '${a.metadata['id']}'.compareTo('${b.metadata['id']}');
+    });
+
+    final items = _page(
+      matches,
+      pagination,
+    ).map((book) => book.metadata).toList(growable: false);
+    _sendJson(request, 200, {
+      'items': items,
       'page': pagination.page,
       'pageSize': pagination.pageSize,
       'total': matches.length,
@@ -339,6 +428,16 @@ const books = <String, BookData>{
       ChapterData('distance', '向远方', 2, '当规则稳定、道路开放，故事便会流向更多读者。'),
     ],
   ),
+};
+
+const categoryDefinitions = <String, String>{
+  'original': 'Original',
+  'protocol': 'Protocol',
+};
+
+const bookPopularity = <Object?, int>{
+  'protocol-garden': 100,
+  'river-of-pages': 80,
 };
 
 Future<void> main(List<String> arguments) async {

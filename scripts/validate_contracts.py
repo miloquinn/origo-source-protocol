@@ -41,6 +41,14 @@ def main() -> None:
     missing_core["capabilities"].remove("content")
     expect_invalid(validator, missing_core, "missing core capability")
 
+    categories_without_browse = copy.deepcopy(discovery)
+    categories_without_browse["capabilities"].remove("browse")
+    expect_invalid(
+        validator,
+        categories_without_browse,
+        "categories capability without browse",
+    )
+
     no_trailing_slash = copy.deepcopy(discovery)
     no_trailing_slash["apiBaseUrl"] = "https://books.example.org/api"
     expect_invalid(validator, no_trailing_slash, "API URL without trailing slash")
