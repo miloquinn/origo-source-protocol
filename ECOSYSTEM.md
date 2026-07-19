@@ -51,10 +51,11 @@ Registry entries must not duplicate the complete discovery document as a new
 source of truth. Readers should fetch discovery from the source and compare the
 stable source ID.
 
-This repository now contains an initial PR-based implementation under
-[`registry/`](registry/README.md). It is intentionally a community registry
-prototype rather than the final companion specification. Operational evidence
-from this implementation should guide the federated format.
+This repository retains schemas and tooling under
+[`registry/`](registry/README.md) as a non-official reference implementation.
+The Open Reading project does not operate or distribute a registry. Independent
+communities may fork the reference and use their own operational experience to
+guide a future federated format.
 
 ## Trust model
 

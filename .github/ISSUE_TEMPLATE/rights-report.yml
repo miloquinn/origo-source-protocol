@@ -1,0 +1,37 @@
+name: Rights report / 权利报告
+description: Report material or links directly controlled by this protocol repository
+labels: [rights-report]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This repository does not operate or control third-party book sources. Reports about independently hosted source content should be sent to the source operator or hosting provider.
+
+        本仓库不运营或控制第三方书源。针对独立书源内容的投诉，请联系书源运营者或托管服务商。
+  - type: input
+    id: location
+    attributes:
+      label: Repository path or URL / 仓库路径或 URL
+      description: Identify material directly controlled by this repository.
+    validations:
+      required: true
+  - type: textarea
+    id: rights
+    attributes:
+      label: Rights and requested action / 权利说明与处理请求
+      description: Explain the right claimed and what action you request.
+    validations:
+      required: true
+  - type: input
+    id: contact
+    attributes:
+      label: Contact / 联系方式
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation / 确认
+      options:
+        - label: I believe in good faith that this report concerns material controlled by this repository. / 我善意相信报告对象由本仓库直接控制。
+          required: true

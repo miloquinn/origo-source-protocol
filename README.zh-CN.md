@@ -4,7 +4,7 @@
 [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) ·
 [协议规范](SPECIFICATION.zh-CN.md) · [OpenAPI](openapi.yaml) ·
 [治理机制](GOVERNANCE.zh-CN.md) · [生态架构](ECOSYSTEM.zh-CN.md) ·
-[社区书源目录](registry/README.zh-CN.md)
+[书源与权利政策](SOURCE_POLICY.zh-CN.md)
 
 Open Reading Source Protocol（ORSP，开放阅读书源协议）是一套用于连接阅读应用与
 独立内容服务的开放 HTTP 协议。它让不同书源以统一方式提供搜索、书籍详情、章节目录
@@ -131,7 +131,7 @@ examples/open-reading-source.json 发现文档示例
 tool/conformance_test.dart      端到端核心一致性测试
 GOVERNANCE.zh-CN.md             协议变更与发布治理
 ECOSYSTEM.zh-CN.md              适配器与联邦书源目录架构
-registry/                       基于 PR 的社区书源目录
+registry/                       非官方 Registry 参考格式与工具
 ```
 
 ## 当前状态与兼容性
@@ -152,9 +152,9 @@ dart run tool/conformance_test.dart
 运营多个联邦式书源目录，目录负责发现、健康状态和信任信息，但不能重新定义通信协议。
 详细边界参见 [ECOSYSTEM.zh-CN.md](ECOSYSTEM.zh-CN.md)。
 
-书源维护者可以通过 Pull Request 加入[社区书源目录](registry/README.zh-CN.md)。每个书源使用
-一个独立 Manifest 文件，CI 会检查格式、ID、公网地址安全和完整阅读链路，然后生成供
-阅读器订阅的统一索引。
+本项目不运营官方书源目录，也不接受书源收录投稿。`registry/` 仅保留为独立社区可自行采用
+的参考格式和工具；Open Reading 官方 App 不读取其中生成的索引。详细边界见
+[书源与权利政策](SOURCE_POLICY.zh-CN.md)。
 
 ## 合法与负责任地使用
 
@@ -163,6 +163,9 @@ ORSP 面向原创内容、公共领域内容以及已获得合法授权的内容
 
 协议本身不授予任何内容版权或访问权限。书源运营者负责确认内容授权，客户端开发者也
 应提供清晰的来源信息与移除机制。
+
+协议兼容不构成内容合法性认证。Open Reading 官方项目不提供书源地址，用户添加的每个
+书源均由其独立选择。
 
 ## 参与贡献
 

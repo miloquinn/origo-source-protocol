@@ -1,12 +1,15 @@
-# Registry Review and Removal Policy
+# Reference Registry Review and Removal Policy
 
 [简体中文](POLICY.zh-CN.md)
 
 ## Scope
 
-The registry lists public ORSP sources that implement the complete Core Reading
-profile. Listing is discretionary and does not certify content ownership,
-security, permanence, or quality.
+This is a policy template for independent communities operating an ORSP
+registry. The Open Reading project does not operate an active registry or
+accept source-listing submissions. Adopters are responsible for implementing
+their own review, rights-reporting, security, and removal process. Listing must
+not be presented as certification of content ownership, security, permanence,
+or quality.
 
 ## Submission declarations
 

@@ -57,7 +57,7 @@ python scripts/test_registry_tool.py
 
 CI 会运行相同检查。仅确认 JSON 或 YAML 语法正确不能证明协议兼容。
 
-社区书源提交请按照 [registry/README.zh-CN.md](registry/README.zh-CN.md) 操作，并使用书源提交
-PR 模板。收录书源与修改 ORSP 协议是两类独立决策。
+本仓库不接受书源收录投稿。Registry Schema 与工具仅作为独立社区可复用的参考实现维护，
+详见 [registry/README.zh-CN.md](registry/README.zh-CN.md)。
 
 提交贡献即表示你同意使用本仓库的 MIT 许可证授权该贡献。

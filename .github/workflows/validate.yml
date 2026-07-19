@@ -28,7 +28,7 @@ jobs:
         run: dart analyze examples/dart_server.dart tool/conformance_test.dart
       - name: Validate schemas, examples, and OpenAPI
         run: python scripts/validate_contracts.py
-      - name: Validate community registry manifests
+      - name: Validate reference registry tooling
         run: |
           python scripts/registry_tool.py validate
           python scripts/registry_tool.py build --check

@@ -63,9 +63,9 @@ python scripts/test_registry_tool.py
 The CI workflow runs the same checks. JSON or YAML syntax validation alone is
 not considered protocol conformance.
 
-Community source submissions follow [registry/README.md](registry/README.md)
-and should use the source-submission pull-request template. A registry listing
-is a separate decision from changing the ORSP protocol.
+This repository does not accept source-listing submissions. The registry
+schemas and tools are maintained only as a reference implementation for
+independent communities; see [registry/README.md](registry/README.md).
 
 By contributing, you agree that your contribution is licensed under the MIT
 License used by this repository.

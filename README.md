@@ -5,8 +5,8 @@
 [Specification](SPECIFICATION.md) · [中文规范](SPECIFICATION.zh-CN.md) ·
 [OpenAPI](openapi.yaml) ·
 [Governance](GOVERNANCE.md) · [Ecosystem](ECOSYSTEM.md) ·
-[Community Registry](registry/README.md) ·
-[中文书源目录](registry/README.zh-CN.md)
+[Source policy](SOURCE_POLICY.md) ·
+[中文书源政策](SOURCE_POLICY.zh-CN.md)
 
 Open Reading Source Protocol (ORSP) is an open HTTP contract for connecting
 reading applications to independent book and serial-content providers.
@@ -95,7 +95,7 @@ examples/dart_server.dart     Runnable reference source
 tool/conformance_test.dart    End-to-end core conformance checks
 GOVERNANCE.md                 Protocol change and release process
 ECOSYSTEM.md                  Adapter and federated registry architecture
-registry/                     PR-based community source registry
+registry/                     Non-official registry reference format and tools
 ```
 
 ## Status
@@ -116,16 +116,20 @@ inside readers. Source discovery communities can operate multiple federated
 registries; registries do not redefine the wire protocol. See
 [ECOSYSTEM.md](ECOSYSTEM.md).
 
-Source operators can submit an ORSP service through a pull request to the
-[community registry](registry/README.md). Each source uses one independently
-validated manifest file, and the combined reader-facing index is generated
-automatically.
+This project does not operate an official source directory and does not accept
+source-listing submissions. The `registry/` directory is reference tooling for
+independent communities only; the official Open Reading app does not consume
+its generated output. See [SOURCE_POLICY.md](SOURCE_POLICY.md).
 
 ## Responsible use
 
 ORSP is intended for original, public-domain, and properly licensed content.
 Do not use it to bypass access controls, violate provider terms, or distribute
 content without permission.
+
+Protocol conformance is not legal certification. Source operators remain
+responsible for their content, and users independently choose every source they
+add.
 
 ## Contributing
 
