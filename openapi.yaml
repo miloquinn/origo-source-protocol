@@ -265,6 +265,9 @@ components:
       pattern: '^[A-Za-z0-9._~-]+$'
     Book:
       type: object
+      description: >-
+        A book scoped to the source serving the response. Multi-source clients
+        retain source attribution and do not treat id as globally unique.
       additionalProperties: true
       required: [id, title]
       properties:
@@ -307,6 +310,8 @@ components:
           items: { $ref: '#/components/schemas/DiscoverySection' }
     DiscoverySection:
       type: object
+      description: >-
+        A curated section scoped to the source serving the response.
       additionalProperties: true
       required: [id, title, items]
       properties:
@@ -326,6 +331,9 @@ components:
           items: { $ref: '#/components/schemas/Category' }
     Category:
       type: object
+      description: >-
+        A browse category scoped to the source serving the response. Equal ids
+        or names from different sources do not identify the same category.
       additionalProperties: true
       required: [id, name]
       properties:

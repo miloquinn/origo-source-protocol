@@ -352,6 +352,29 @@ use the search pagination rules. The response uses the search-page schema.
 When `category` is omitted, the endpoint browses all books visible to the
 source under the selected sort.
 
+### 9.1 Multi-source aggregation
+
+A client connected to more than one source MAY present discovery shelves,
+categories, or browse results in one aggregate interface. An aggregate client:
+
+- MUST retain the originating source for every section, category, and book;
+- MUST treat section, category, and book IDs as source-scoped and MUST NOT
+  merge objects solely because their IDs or display names match;
+- SHOULD visibly identify the source wherever results from several sources can
+  otherwise be confused, and MAY offer an all-sources view plus a single-source
+  filter;
+- SHOULD preserve each source's response ordering when combining `latest` or
+  `popular` feeds and SHOULD use a source-balanced merge so one source cannot
+  monopolize the aggregate solely through result volume or timestamps; and
+- SHOULD retain successful results when another source times out or fails,
+  while making partial failure observable to the user when it affects the
+  result.
+
+`updatedAt` establishes ordering within one source's `latest` response. An
+aggregate client MAY use it as a cross-source freshness hint, but MUST NOT treat
+timestamps from independently operated sources as a globally authoritative
+ranking.
+
 ## 10. Book details
 
 Endpoint relation:

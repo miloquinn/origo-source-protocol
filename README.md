@@ -49,6 +49,11 @@ ORSP 1.1 Core Reading sources implement all four core capabilities. Discovery,
 categories, and browsing are optional and capability-gated, so existing ORSP
 1.0 sources remain compatible.
 
+Readers may aggregate several sources into an all-sources discovery view and
+offer a single-source filter. Aggregate interfaces retain source attribution,
+keep IDs source-scoped, preserve each source's internal ranking, and use a
+source-balanced merge for latest or popular feeds.
+
 Example discovery document:
 
 ```json

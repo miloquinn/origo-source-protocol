@@ -24,6 +24,19 @@ The standardized browse sorts are `latest` and `popular`. Sources may implement
 any optional capability independently except that `categories` requires
 `browse`, because category IDs are defined as browse inputs.
 
+## Multi-source reader behavior
+
+Readers may aggregate several discovery-capable sources, but aggregation does
+not create a new global identifier namespace. Every shelf, category, and book
+remains attached to its originating source. Matching IDs or display labels are
+not sufficient grounds for merging objects across sources.
+
+An aggregate reader should expose source attribution and may offer both an
+all-sources view and a single-source filter. For latest and popular feeds it
+should preserve each source's internal ordering and use a source-balanced merge
+rather than allowing one source to dominate by volume or timestamps. A failed
+source should not discard successful results from other sources.
+
 ## Compatibility
 
 - The four ORSP 1.0 core endpoints and object meanings are unchanged.

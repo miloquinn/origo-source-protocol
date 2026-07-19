@@ -77,6 +77,10 @@ GET {apiBaseUrl}v1/browse?category={categoryId}&sort=latest&page=1&pageSize=20
 继续搜索和阅读。完整字段与错误处理要求请阅读
 [协议规范](SPECIFICATION.zh-CN.md)，接口模型可查看 [OpenAPI 3.1 文档](openapi.yaml)。
 
+客户端可以把多个书源聚合为默认“全部书源”发现页，并提供单书源筛选。聚合界面必须
+保留来源归属和书源作用域内的 ID，保持各书源内部排序，并在最新或热门列表中采用来源
+均衡的合并方式。
+
 ## 快速运行测试书源
 
 仓库内置一个零第三方依赖的 Dart 参考服务。示例书籍和正文均为原创测试内容，不依赖
