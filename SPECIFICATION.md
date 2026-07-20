@@ -109,7 +109,8 @@ MUST NOT use the `orsp` namespace unless it is defined by a future ORSP
 specification. Unknown extension tokens do not make a source incompatible.
 
 Optional discovery members are `description`, `iconUrl`, `websiteUrl`,
-`languages`, `supportedVersions`, and `maxCatalogPageSize`. Language tags MUST
+`languages`, `supportedVersions`, `maxCatalogPageSize`, `operatorName`,
+`contactUrl`, `contentLicense`, and `rightsStatement`. Language tags MUST
 follow BCP 47, such as `en`, `zh-CN`, or `sr-Latn`.
 
 `supportedVersions`, when present, is a non-empty array of ORSP
@@ -120,6 +121,18 @@ clients MAY use it for diagnostics and MUST NOT require it.
 `maxCatalogPageSize`, when present, is an integer between 100 and 1000
 declaring the largest `pageSize` the source accepts on the chapter-catalog
 endpoint (Section 11). When absent, the limit is 100.
+
+`operatorName`, `contactUrl`, `contentLicense`, and `rightsStatement` are
+rights-transparency members. `operatorName` identifies the entity that
+actually operates the source and can act on rights requests. `contactUrl`,
+when present, MUST be an absolute HTTP(S) URL for a contact or rights-report
+page controlled by that operator. `contentLicense` is a short license name or
+authorization basis, for example `CC BY 4.0` or `Public Domain`.
+`rightsStatement` is a concise, source-supplied description of content
+provenance or authorization scope. A client MAY display these members for
+transparency but MUST NOT treat their presence, absence, or content as a
+legality, authorization, or identity certification by any reader, registry,
+or the protocol itself.
 
 `apiBaseUrl` MUST NOT contain user information, a query, or a fragment and MUST
 end in `/`. Endpoint paths in this document are resolved relative to that URL.

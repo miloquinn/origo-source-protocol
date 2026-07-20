@@ -76,6 +76,25 @@
       "minimum": 100,
       "maximum": 1000
     },
+    "operatorName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "contactUrl": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://"
+    },
+    "contentLicense": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "rightsStatement": {
+      "type": "string",
+      "maxLength": 2000
+    },
     "capabilities": {
       "type": "array",
       "minItems": 4,

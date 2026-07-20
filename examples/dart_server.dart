@@ -75,6 +75,14 @@ class ReferenceSourceServer {
         'apiBaseUrl': baseUri.resolve('api/').toString(),
         'languages': ['zh-CN', 'en'],
         'maxCatalogPageSize': maxCatalogPageSize,
+        'operatorName': 'ORSP Reference Project',
+        'contactUrl':
+            'https://github.com/miloquinn/open-reading-source-protocol/issues',
+        'contentLicense':
+            'Original example content under the repository license',
+        'rightsStatement':
+            'This reference source contains only original protocol test '
+            'content created for ORSP development.',
         'capabilities': [
           'search',
           'discover',
