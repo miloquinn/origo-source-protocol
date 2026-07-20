@@ -1,4 +1,4 @@
-# 开放阅读书源协议 1.1
+# 开放阅读书源协议 1.3
 
 [English normative specification](SPECIFICATION.md)
 
@@ -13,7 +13,7 @@
 ## 1. 范围和设计目标
 
 开放阅读书源协议（Open Reading Source Protocol，ORSP）定义了阅读客户端与独立内容
-书源之间安全的 HTTP 边界。ORSP 1.1 包括：
+书源之间安全的 HTTP 边界。ORSP 1.3 包括：
 
 - 书源发现；
 - 书籍搜索与元数据；
@@ -21,10 +21,10 @@
 - 章节目录；
 - 章节正文获取。
 
-ORSP 1.1 面向不要求用户认证的公开 HTTP(S) 书源。它不定义可执行的抓取规则。书源可以
+ORSP 1.3 面向不要求用户认证的公开 HTTP(S) 书源。它不定义可执行的抓取规则。书源可以
 在服务端内部使用已获授权的适配器，但客户端只能接收本协议定义的数据。
 
-核心阅读配置应保持精简。符合 ORSP 1.1 的书源必须完整实现发现、搜索、详情、目录和正文
+核心阅读配置应保持精简。符合 ORSP 1.3 的书源必须完整实现发现、搜索、详情、目录和正文
 链路。可选功能通过能力标识声明，不得改变核心字段或接口的含义。
 
 ## 2. 协议版本与演进
@@ -68,7 +68,7 @@ Schema 明确允许，否则书源不得返回 `null`。
 | 字段 | 要求 |
 | --- | --- |
 | `protocol` | 必须等于 `open-reading-source` |
-| `protocolVersion` | ORSP `主版本.次版本`；本文使用 `1.1` |
+| `protocolVersion` | ORSP `主版本.次版本`；本文使用 `1.3` |
 | `id` | 稳定且全局唯一的书源标识 |
 | `name` | 面向用户的书源名称 |
 | `apiBaseUrl` | 以 `/` 结尾的绝对 HTTP(S) URL |
@@ -76,7 +76,7 @@ Schema 明确允许，否则书源不得返回 `null`。
 
 四项核心能力是 `search`、`detail`、`catalog` 和 `content`。
 
-ORSP 1.1 定义三项可选的标准能力：
+ORSP 1.3 定义三项可选的标准能力：
 
 | 能力 | 接口关系 | 用途 |
 | --- | --- | --- |
@@ -98,10 +98,10 @@ ORSP 1.1 定义三项可选的标准能力：
 `zh-CN` 或 `sr-Latn`。
 
 `supportedVersions` 是非空的 ORSP `主版本.次版本` 字符串数组，出现时必须包含
-`protocolVersion`，用于让多版本书源声明自己实现的全部协议版本。ORSP 1.1 客户端可以
+`protocolVersion`，用于让多版本书源声明自己实现的全部协议版本。ORSP 1.3 客户端可以
 将其用于诊断，但不得依赖它。
 
-`maxCatalogPageSize` 是 100 至 1000 之间的整数，声明章节目录接口（第 11 节）接受的
+`maxCatalogPageSize` 是 1 至 1000 之间的整数，声明章节目录接口（第 11 节）接受的
 最大 `pageSize`。省略时上限为 100。
 
 `operatorName`、`contactUrl`、`contentLicense` 和 `rightsStatement` 是权利透明度
@@ -162,7 +162,7 @@ scheme，并应当在下载封面或其他远程资源前应用平台相关的�
 
 - 核心接口使用 `GET`，并且必须是安全且幂等的；
 - 客户端应发送 `Accept: application/json`；
-- 客户端应通过 `X-Open-Reading-Protocol` 发送自己支持的最高 ORSP 1.x 版本，例如 `1.1`；
+- 客户端应通过 `X-Open-Reading-Protocol` 发送自己支持的最高 ORSP 1.x 版本，例如 `1.3`；
 - 书源可以通过同名响应头返回自己的协议版本；
 - 不支持的方法必须返回 `405 Method Not Allowed`，并应包含 `Allow` 响应头；
 - 对于较大的 JSON 响应，书源应支持 HTTP 压缩。
@@ -264,7 +264,7 @@ GET v1/discover
 
 每个分区最多包含 100 本书。书籍对象与搜索和详情使用同一模型。数据集不变时，分区顺序
 和书籍排序应保持确定性。除非书源明确记录相关行为，客户端不得把分区解释为个性化结果；
-ORSP 1.1 不定义用户认证或用户画像。
+ORSP 1.3 不定义用户认证或用户画像。
 
 ## 8. 分类（可选）
 
@@ -300,7 +300,7 @@ GET v1/browse?category={categoryId}&sort={sort}&page={page}&pageSize={pageSize}
 `category` 可选。提供时长度必须为 1 至 200 个字符，并对应 `v1/categories` 返回的分类。
 未声明 `categories` 的书源在收到 `category` 参数时必须返回 `400`。
 
-`sort` 可选，默认值为 `latest`。ORSP 1.1 定义：
+`sort` 可选，默认值为 `latest`。ORSP 1.3 定义：
 
 - `latest`：按照书籍 `updatedAt` 降序排列；没有 `updatedAt` 的书排在有日期的书之后；
 - `popular`：由书源定义的热门排序；排名快照不变时必须保持确定性。
@@ -393,7 +393,7 @@ GET v1/books/{bookId}/chapters/{chapterId}
 `bookId` 和 `chapterId` 必须与请求的资源完全一致。`baseUrl` 可选；提供时必须是绝对
 HTTP(S) URL。
 
-ORSP 1.1 支持以下正文类型：
+ORSP 1.3 支持以下正文类型：
 
 - `text/plain`；
 - `text/markdown`，按照 CommonMark 解释；
@@ -436,7 +436,7 @@ HTML 不得包含脚本或其他可执行内容。书源应移除事件处理属
 `message` 面向开发和诊断，客户端不应假定它已经本地化。`retryable` 和 `requestId` 可选。
 客户端必须忽略未知错误字段和未知错误码。
 
-ORSP 1.1 定义以下标准错误码：
+ORSP 1.3 定义以下标准错误码：
 
 | 错误码 | 状态码 | 条件 |
 | --- | --- | --- |
@@ -469,14 +469,14 @@ ORSP 不授予任何版权或访问权限。书源运营者必须只提供自己
 
 ## 15. 一致性认证
 
-声称符合 `ORSP 1.1 Core Reading` 的实现必须：
+声称符合 `ORSP 1.3 Core Reading` 的实现必须：
 
 1. 实现发现和全部四项核心能力；
 2. 满足本文的规范性要求；
 3. 通过所声明版本的官方核心一致性测试；
 4. 单独披露可选扩展能力。
 
-声称符合 `ORSP 1.1 Discovery` 的实现还必须实现并声明 `discover`、`categories` 和
+声称符合 `ORSP 1.3 Discovery` 的实现还必须实现并声明 `discover`、`categories` 和
 `browse`，并通过官方发现配置检查。书源可以只实现部分可选标准能力，但不得因此声称
 符合完整 Discovery 配置。
 
@@ -484,7 +484,7 @@ ORSP 不授予任何版权或访问权限。书源运营者必须只提供自己
 
 ## 16. 保留的未来工作
 
-以下功能不属于 ORSP 1.1，需要后续次版本、主版本或配套规范：
+以下功能不属于 ORSP 1.3，需要后续次版本、主版本或配套规范：
 
 - 用户认证和付费内容授权；
 - 跨主版本协商：当书源通过 `supportedVersions` 声明多个主版本时选择入口的规则，

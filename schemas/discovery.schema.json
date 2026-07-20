@@ -73,7 +73,7 @@
     },
     "maxCatalogPageSize": {
       "type": "integer",
-      "minimum": 100,
+      "minimum": 1,
       "maximum": 1000
     },
     "operatorName": {

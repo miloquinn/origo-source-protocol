@@ -62,7 +62,7 @@ def main() -> None:
     expect_invalid(validator, reserved_extension, "reserved extension namespace")
 
     patch_supported_version = copy.deepcopy(discovery)
-    patch_supported_version["supportedVersions"] = ["1.1.0"]
+    patch_supported_version["supportedVersions"] = ["1.3.0"]
     expect_invalid(
         validator,
         patch_supported_version,
@@ -70,7 +70,7 @@ def main() -> None:
     )
 
     catalog_page_size_too_small = copy.deepcopy(discovery)
-    catalog_page_size_too_small["maxCatalogPageSize"] = 50
+    catalog_page_size_too_small["maxCatalogPageSize"] = 0
     expect_invalid(
         validator,
         catalog_page_size_too_small,

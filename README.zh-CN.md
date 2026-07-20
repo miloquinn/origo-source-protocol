@@ -42,12 +42,17 @@ GET /.well-known/open-reading-source.json
 ```json
 {
   "protocol": "open-reading-source",
-  "protocolVersion": "1.1",
+  "protocolVersion": "1.3",
   "id": "org.example.public-books",
   "name": "示例公共图书源",
   "description": "由 Example.org 维护的公共领域图书",
   "apiBaseUrl": "https://books.example.org/api/",
+  "operatorName": "示例公共图书基金会",
+  "contactUrl": "https://books.example.org/rights",
+  "contentLicense": "Public Domain",
+  "rightsStatement": "本书源提供经运营者确认的公共领域图书。",
   "languages": ["zh-CN"],
+  "maxCatalogPageSize": 200,
   "capabilities": [
     "search", "discover", "categories", "browse",
     "detail", "catalog", "content"
@@ -55,7 +60,7 @@ GET /.well-known/open-reading-source.json
 }
 ```
 
-协议 1.1 保留四类核心接口：
+协议 1.3 保留四类核心接口：
 
 ```text
 GET {apiBaseUrl}v1/search?q={query}&page=1&pageSize=20
@@ -72,7 +77,7 @@ GET {apiBaseUrl}v1/categories
 GET {apiBaseUrl}v1/browse?category={categoryId}&sort=latest&page=1&pageSize=20
 ```
 
-这些相对路径必须基于发现文档中的 `apiBaseUrl` 解析。ORSP 1.1 Core Reading 书源必须
+这些相对路径必须基于发现文档中的 `apiBaseUrl` 解析。ORSP 1.3 Core Reading 书源必须
 实现全部四项核心能力；发现、分类和浏览按能力声明启用，旧的 1.0 书源无需修改也可以
 继续搜索和阅读。完整字段与错误处理要求请阅读
 [协议规范](SPECIFICATION.zh-CN.md)，接口模型可查看 [OpenAPI 3.1 文档](openapi.yaml)。
@@ -122,7 +127,7 @@ HTML 正文应被视为不可信输入，客户端在渲染前应进行清理。
 
 ```text
 SPECIFICATION.md                规范性协议说明
-OEP-0001-discovery.md           ORSP 1.1 发现能力提案与兼容性分析
+OEP-0001-discovery.md           历史 ORSP 1.1 发现能力提案与兼容性分析
 SPECIFICATION.zh-CN.md          简体中文协议翻译
 openapi.yaml                    OpenAPI 3.1 接口定义
 schemas/discovery.schema.json   发现文档 JSON Schema
@@ -136,7 +141,7 @@ registry/                       非官方 Registry 参考格式与工具
 
 ## 当前状态与兼容性
 
-协议版本 `1.1` 目前是候选草案。兼容性规则、机器可读契约、参考书源和核心一致性测试
+协议版本 `1.3` 目前是候选草案。兼容性规则、机器可读契约、参考书源和核心一致性测试
 会同步演进。在宣布稳定版本之前，欢迎独立阅读器和书源实现参与互操作验证。
 
 可以运行官方核心测试：

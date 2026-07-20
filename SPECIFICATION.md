@@ -1,4 +1,4 @@
-# Open Reading Source Protocol 1.1
+# Open Reading Source Protocol 1.3
 
 [简体中文翻译](SPECIFICATION.zh-CN.md)
 
@@ -11,7 +11,7 @@ only when, they appear in all capitals.
 ## 1. Scope and design goals
 
 Open Reading Source Protocol (ORSP) defines a safe HTTP boundary between a
-reading client and an independently operated content source. ORSP 1.1 covers:
+reading client and an independently operated content source. ORSP 1.3 covers:
 
 - source discovery;
 - book search and metadata;
@@ -19,11 +19,11 @@ reading client and an independently operated content source. ORSP 1.1 covers:
 - chapter catalogs;
 - chapter content retrieval.
 
-ORSP 1.1 covers public HTTP(S) sources that do not require user authentication.
+ORSP 1.3 covers public HTTP(S) sources that do not require user authentication.
 It does not define executable scraping rules. A source MAY use an authorized
 adapter internally, but clients only receive data described by this protocol.
 
-The core reading profile is intentionally small. A conforming ORSP 1.1 source
+The core reading profile is intentionally small. A conforming ORSP 1.3 source
 MUST implement the complete discovery, search, detail, catalog, and content
 path. Optional features are advertised as capabilities and MUST NOT change the
 meaning of core fields or endpoints.
@@ -81,7 +81,7 @@ Required discovery members:
 | Member | Requirement |
 | --- | --- |
 | `protocol` | MUST equal `open-reading-source` |
-| `protocolVersion` | ORSP `MAJOR.MINOR`; this specification uses `1.1` |
+| `protocolVersion` | ORSP `MAJOR.MINOR`; this specification uses `1.3` |
 | `id` | Stable globally unique source identifier |
 | `name` | Human-readable source name |
 | `apiBaseUrl` | Absolute HTTP(S) URL ending in `/` |
@@ -89,7 +89,7 @@ Required discovery members:
 
 Core capability tokens are `search`, `detail`, `catalog`, and `content`.
 
-ORSP 1.1 defines three optional standard capability tokens:
+ORSP 1.3 defines three optional standard capability tokens:
 
 | Capability | Endpoint relation | Purpose |
 | --- | --- | --- |
@@ -115,10 +115,10 @@ follow BCP 47, such as `en`, `zh-CN`, or `sr-Latn`.
 
 `supportedVersions`, when present, is a non-empty array of ORSP
 `MAJOR.MINOR` version strings that MUST include `protocolVersion`. It lets a
-multi-version source state every protocol version it implements. ORSP 1.1
+multi-version source state every protocol version it implements. ORSP 1.3
 clients MAY use it for diagnostics and MUST NOT require it.
 
-`maxCatalogPageSize`, when present, is an integer between 100 and 1000
+`maxCatalogPageSize`, when present, is an integer between 1 and 1000
 declaring the largest `pageSize` the source accepts on the chapter-catalog
 endpoint (Section 11). When absent, the limit is 100.
 
@@ -199,7 +199,7 @@ how to interpret it.
 - Core endpoints use `GET` and MUST be safe and idempotent.
 - Clients SHOULD send `Accept: application/json`.
 - Clients SHOULD send `X-Open-Reading-Protocol` with their highest supported
-  ORSP 1.x version, for example `1.1`.
+  ORSP 1.x version, for example `1.3`.
 - Sources MAY return `X-Open-Reading-Protocol` containing the source protocol
   version.
 - Unsupported methods MUST return `405 Method Not Allowed` and SHOULD include
@@ -315,7 +315,7 @@ Each section MAY contain at most 100 books. Book objects use the same model as
 search and detail. Section ordering and item ranking are source-defined but
 SHOULD be deterministic for an unchanged dataset. Clients MUST NOT interpret a
 section as personalized unless the source explicitly documents that behavior;
-ORSP 1.1 does not define authentication or user profiles.
+ORSP 1.3 does not define authentication or user profiles.
 
 ## 8. Categories (optional)
 
@@ -353,7 +353,7 @@ GET v1/browse?category={categoryId}&sort={sort}&page={page}&pageSize={pageSize}
 characters and identify a category returned by `v1/categories`. A source that
 does not declare `categories` MUST return `400` if `category` is supplied.
 
-`sort` is optional and defaults to `latest`. ORSP 1.1 defines:
+`sort` is optional and defaults to `latest`. ORSP 1.3 defines:
 
 - `latest`: descending by the book's `updatedAt`, with books lacking
   `updatedAt` ordered after dated books;
@@ -463,7 +463,7 @@ GET v1/books/{bookId}/chapters/{chapterId}
 `bookId` and `chapterId` MUST exactly match the requested resource. `baseUrl` is
 optional and, when present, MUST be an absolute HTTP(S) URL.
 
-ORSP 1.1 content types are:
+ORSP 1.3 content types are:
 
 - `text/plain`;
 - `text/markdown`, interpreted as CommonMark;
@@ -509,7 +509,7 @@ separated by underscores. `message` is intended for developers and diagnostics;
 clients SHOULD NOT assume it is localized. `retryable` and `requestId` are
 optional. Clients MUST ignore unknown error members and unknown error codes.
 
-ORSP 1.1 defines these standard error codes:
+ORSP 1.3 defines these standard error codes:
 
 | Code | Status | Condition |
 | --- | --- | --- |
@@ -551,14 +551,14 @@ responsible for distributing only content they are authorized to provide.
 
 ## 15. Conformance
 
-An implementation claiming `ORSP 1.1 Core Reading` conformance MUST:
+An implementation claiming `ORSP 1.3 Core Reading` conformance MUST:
 
 1. implement discovery and all four core capabilities;
 2. satisfy the normative requirements in this document;
 3. pass the official core conformance suite for the claimed version;
 4. disclose optional extension capabilities separately.
 
-An implementation claiming `ORSP 1.1 Discovery` conformance MUST additionally
+An implementation claiming `ORSP 1.3 Discovery` conformance MUST additionally
 implement and advertise `discover`, `categories`, and `browse`, and pass the
 official discovery-profile checks. A source MAY implement only a subset of the
 optional standard capabilities without claiming the complete Discovery
@@ -569,7 +569,7 @@ Conformance reports SHOULD record the test-suite version and execution date.
 
 ## 16. Reserved future work
 
-The following features are intentionally outside ORSP 1.1 and require a future
+The following features are intentionally outside ORSP 1.3 and require a future
 minor version, major version, or companion specification:
 
 - authentication and paid-content authorization;
