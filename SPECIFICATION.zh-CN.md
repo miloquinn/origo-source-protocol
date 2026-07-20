@@ -93,7 +93,8 @@ ORSP 1.1 定义三项可选的标准能力：
 客户端遇到未知扩展能力时，不得因此判定书源不兼容。
 
 发现文档的可选字段包括 `description`、`iconUrl`、`websiteUrl`、`languages`、
-`supportedVersions` 和 `maxCatalogPageSize`。语言必须使用 BCP 47 标签，例如 `en`、
+`supportedVersions`、`maxCatalogPageSize`、`operatorName`、`contactUrl`、
+`contentLicense` 和 `rightsStatement`。语言必须使用 BCP 47 标签，例如 `en`、
 `zh-CN` 或 `sr-Latn`。
 
 `supportedVersions` 是非空的 ORSP `主版本.次版本` 字符串数组，出现时必须包含
@@ -102,6 +103,13 @@ ORSP 1.1 定义三项可选的标准能力：
 
 `maxCatalogPageSize` 是 100 至 1000 之间的整数，声明章节目录接口（第 11 节）接受的
 最大 `pageSize`。省略时上限为 100。
+
+`operatorName`、`contactUrl`、`contentLicense` 和 `rightsStatement` 是权利透明度
+字段。`operatorName` 标识实际运营该书源、能够处理权利请求的主体。`contactUrl` 如果
+出现，必须是该运营者控制的绝对 HTTP(S) 联系或权利投诉页面。`contentLicense` 是简短
+的许可名称或授权依据，例如 `CC BY 4.0` 或 `Public Domain`。`rightsStatement` 是书源
+自行提供的内容来源或授权范围简述。客户端可以为了透明度展示这些字段，但不得把它们的
+存在、缺失或内容当作任何阅读器、注册表或协议本身对合法性、授权或身份的认证。
 
 `apiBaseUrl` 不得包含用户名、密码、查询参数或片段，并且必须以 `/` 结尾。本文接口路径
 相对于该 URL 解析。例如，API 基础地址为 `https://books.example/api/`，接口关系为

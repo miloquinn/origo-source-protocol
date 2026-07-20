@@ -59,6 +59,24 @@ Future<void> main() async {
       maxCatalogPageSize >= 100 && maxCatalogPageSize <= 1000,
       'maxCatalogPageSize is within the allowed range',
     );
+    check(
+      (discoveryJson['operatorName'] as String).isNotEmpty,
+      'operatorName is present and non-empty',
+    );
+    check(
+      Uri.parse(
+        discoveryJson['contactUrl'] as String,
+      ).scheme.startsWith('http'),
+      'contactUrl is an absolute HTTP(S) URL',
+    );
+    check(
+      (discoveryJson['contentLicense'] as String).isNotEmpty,
+      'contentLicense is present and non-empty',
+    );
+    check(
+      (discoveryJson['rightsStatement'] as String).isNotEmpty,
+      'rightsStatement is present and non-empty',
+    );
 
     final discover = await request(client, apiBase.resolve('v1/discover'));
     check(discover.status == 200, 'discover returns 200');
