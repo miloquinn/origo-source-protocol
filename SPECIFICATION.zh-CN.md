@@ -164,6 +164,9 @@ scheme，并应当在下载封面或其他远程资源前应用平台相关的�
 - 客户端应发送 `Accept: application/json`；
 - 客户端应通过 `X-Open-Reading-Protocol` 发送自己支持的最高 ORSP 1.x 版本，例如 `1.3`；
 - 书源可以通过同名响应头返回自己的协议版本；
+- 客户端或运维探针可以发送 `X-Open-Reading-Request-Purpose: health-check`。
+  书源应当将带有该值的请求排除在面向读者的统计和排行之外。此请求头仅用于说明用途，
+  不得授予访问权限、绕过速率限制或改变内容授权；未发送该头的请求视为用户请求；
 - 不支持的方法必须返回 `405 Method Not Allowed`，并应包含 `Allow` 响应头；
 - 对于较大的 JSON 响应，书源应支持 HTTP 压缩。
 

@@ -15,6 +15,7 @@ paths:
       summary: Get curated discovery shelves
       parameters:
         - $ref: '#/components/parameters/ProtocolVersion'
+        - $ref: '#/components/parameters/RequestPurpose'
       responses:
         '200':
           description: Curated discovery shelves
@@ -34,6 +35,7 @@ paths:
       summary: List browseable categories
       parameters:
         - $ref: '#/components/parameters/ProtocolVersion'
+        - $ref: '#/components/parameters/RequestPurpose'
       responses:
         '200':
           description: Source-defined categories
@@ -53,6 +55,7 @@ paths:
       summary: Browse books by category or standard sort
       parameters:
         - $ref: '#/components/parameters/ProtocolVersion'
+        - $ref: '#/components/parameters/RequestPurpose'
         - name: category
           in: query
           required: false
@@ -83,6 +86,7 @@ paths:
       summary: Search books
       parameters:
         - $ref: '#/components/parameters/ProtocolVersion'
+        - $ref: '#/components/parameters/RequestPurpose'
         - name: q
           in: query
           required: true
@@ -109,6 +113,7 @@ paths:
       summary: Get book details
       parameters:
         - $ref: '#/components/parameters/ProtocolVersion'
+        - $ref: '#/components/parameters/RequestPurpose'
         - $ref: '#/components/parameters/BookId'
       responses:
         '200':
@@ -130,6 +135,7 @@ paths:
       summary: List a book's chapters
       parameters:
         - $ref: '#/components/parameters/ProtocolVersion'
+        - $ref: '#/components/parameters/RequestPurpose'
         - $ref: '#/components/parameters/BookId'
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/CatalogPageSize'
@@ -153,6 +159,7 @@ paths:
       summary: Get chapter content
       parameters:
         - $ref: '#/components/parameters/ProtocolVersion'
+        - $ref: '#/components/parameters/RequestPurpose'
         - $ref: '#/components/parameters/BookId'
         - $ref: '#/components/parameters/ChapterId'
       responses:
@@ -177,6 +184,12 @@ components:
       required: false
       description: Highest ORSP 1.x version supported by the client.
       schema: { type: string, pattern: '^1\.(?:0|[1-9][0-9]*)$' }
+    RequestPurpose:
+      name: X-Open-Reading-Request-Purpose
+      in: header
+      required: false
+      description: Advisory request purpose. Use health-check for operator probes; never use it for authorization or rate-limit bypass.
+      schema: { type: string, enum: [health-check] }
     Page:
       name: page
       in: query

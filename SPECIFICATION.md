@@ -202,6 +202,11 @@ how to interpret it.
   ORSP 1.x version, for example `1.3`.
 - Sources MAY return `X-Open-Reading-Protocol` containing the source protocol
   version.
+- A client or operator probe MAY send `X-Open-Reading-Request-Purpose:
+  health-check`. Sources SHOULD exclude requests with this value from
+  reader-facing analytics and rankings. The header is advisory only and MUST
+  NOT grant access, bypass rate limits, or alter content authorization.
+  Requests without it are user requests.
 - Unsupported methods MUST return `405 Method Not Allowed` and SHOULD include
   an `Allow` header.
 - Sources SHOULD support HTTP compression for large JSON responses.
