@@ -267,7 +267,7 @@ def fetch(url: str) -> HttpResult:
                         "Accept": "application/json",
                         "Accept-Encoding": "identity",
                         "User-Agent": "ORSP-Registry-Validator/1.0",
-                        "X-Open-Reading-Protocol": "1.3",
+                        "X-Open-Reading-Protocol": "1.4",
                     },
                 )
                 response = connection.getresponse()
@@ -414,7 +414,7 @@ def check_source(path: Path) -> dict[str, Any]:
     if content.get("bookId") != book_id or content.get("chapterId") != chapter_id:
         raise RegistryError("Chapter content IDs do not match the requested resource")
     if content.get("contentType") not in {"text/plain", "text/markdown", "text/html"}:
-        raise RegistryError("Chapter contentType is not supported by ORSP 1.3")
+        raise RegistryError("Chapter contentType is not supported by ORSP 1.4")
     if not isinstance(content.get("content"), str):
         raise RegistryError("Chapter content must be a string")
 

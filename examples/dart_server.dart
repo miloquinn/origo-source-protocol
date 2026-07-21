@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-const protocolVersion = '1.3';
+const protocolVersion = '1.4';
 const maxCatalogPageSize = 200;
 final _opaqueIdPattern = RegExp(r'^[A-Za-z0-9._~-]{1,200}$');
 

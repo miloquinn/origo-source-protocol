@@ -28,12 +28,12 @@ Future<void> main() async {
       'discovery uses application/json',
     );
     check(
-      discovery.headers.value('x-open-reading-protocol') == '1.3',
+      discovery.headers.value('x-open-reading-protocol') == '1.4',
       'source advertises its protocol version header',
     );
     final discoveryJson = discovery.json as Map<String, dynamic>;
     check(discoveryJson['protocol'] == 'open-reading-source', 'protocol token');
-    check(discoveryJson['protocolVersion'] == '1.3', 'protocol version');
+    check(discoveryJson['protocolVersion'] == '1.4', 'protocol version');
     final capabilities = (discoveryJson['capabilities'] as List).toSet();
     check(
       capabilities.containsAll([
@@ -99,7 +99,7 @@ Future<void> main() async {
     final latest = await request(
       client,
       apiBase.resolve('v1/browse?sort=latest&page=1&pageSize=20'),
-      headers: {'X-Open-Reading-Protocol': '1.3'},
+      headers: {'X-Open-Reading-Protocol': '1.4'},
     );
     check(latest.status == 200, 'latest browse returns 200');
     final latestItems = (latest.json as Map)['items'] as List;
@@ -123,7 +123,7 @@ Future<void> main() async {
     final searchPage1 = await request(
       client,
       apiBase.resolve('v1/search?q=Open%20Reading&page=1&pageSize=1&future=x'),
-      headers: {'X-Open-Reading-Protocol': '1.3'},
+      headers: {'X-Open-Reading-Protocol': '1.4'},
     );
     check(searchPage1.status == 200, 'search returns 200');
     final searchJson1 = searchPage1.json as Map<String, dynamic>;

@@ -36,7 +36,7 @@ GET {apiBaseUrl}v1/books/{bookId}/chapters?page=1&pageSize=100
 GET {apiBaseUrl}v1/books/{bookId}/chapters/{chapterId}
 ```
 
-ORSP 1.3 sources may additionally advertise a standard discovery profile:
+ORSP 1.4 sources may additionally advertise a standard discovery profile:
 
 ```text
 GET {apiBaseUrl}v1/discover
@@ -45,7 +45,7 @@ GET {apiBaseUrl}v1/browse?category={categoryId}&sort=latest&page=1&pageSize=20
 ```
 
 These endpoint relations are resolved against the discovered `apiBaseUrl`.
-ORSP 1.3 Core Reading sources implement all four core capabilities. Discovery,
+ORSP 1.4 Core Reading sources implement all four core capabilities. Discovery,
 categories, and browsing are optional and capability-gated, so existing ORSP
 1.0 sources remain compatible.
 
@@ -59,7 +59,7 @@ Example discovery document:
 ```json
 {
   "protocol": "open-reading-source",
-  "protocolVersion": "1.3",
+  "protocolVersion": "1.4",
   "id": "org.example.public-books",
   "name": "Example Public Books",
   "description": "Public-domain books maintained by Example.org",
@@ -105,7 +105,7 @@ registry/                     Non-official registry reference format and tools
 
 ## Status
 
-Protocol version `1.3` is a candidate draft. Its compatibility rules,
+Protocol version `1.4` is a candidate draft. Its compatibility rules,
 machine-readable contracts, reference source, and core conformance tests are
 now developed together. Independent reader and source implementations are
 welcome before the specification is declared stable.

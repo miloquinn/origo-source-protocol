@@ -30,7 +30,7 @@ GET {apiBaseUrl}v1/books/{bookId}/chapters?page=1&pageSize=100
 GET {apiBaseUrl}v1/books/{bookId}/chapters/{chapterId}
 ```
 
-La versión 1.3 también define operaciones opcionales de descubrimiento,
+La versión 1.4 también define operaciones opcionales de descubrimiento,
 categorías y exploración:
 
 ```text
@@ -66,7 +66,7 @@ emulador de Android.
 
 ## Estado y uso responsable
 
-La versión `1.3` es un borrador candidato. El flujo básico de lectura ya
+La versión `1.4` es un borrador candidato. El flujo básico de lectura ya
 ha sido verificado, pero se aceptan propuestas sobre autenticación,
 sincronización, paginación y formatos de contenido antes de declarar una
 versión estable.
