@@ -16,6 +16,7 @@ controlled by this project.
 
 ```text
 registry/sources/<source-id>.json
+registry/status/<source-id>.json
 registry/generated/registry.json
 ```
 
@@ -28,12 +29,20 @@ Reference fields include `discoveryUrl`, `maintainers`, `description`,
 Protocol conformance does not prove content legality, quality, authorization,
 or operator trustworthiness.
 
+`registry/status/` may contain the latest bounded diagnostic record for a
+source, validated by `schemas/source-status.schema.json`. It records a profile,
+timestamp, stage outcomes, and bounded latency only. It MUST NOT contain reader
+IP addresses, chapter text, cookies, credentials, private URLs, or browser
+challenge material. A status file is registry metadata, never a replacement
+for the source's own discovery document.
+
 ## Reference checks
 
 ```bash
 python scripts/registry_tool.py validate
 python scripts/registry_tool.py build --check
 python scripts/registry_tool.py check-source path/to/source-entry.json
+python scripts/registry_tool.py check-source path/to/source-entry.json --profile discovery
 ```
 
 These tools validate format and network-safety invariants. They do not certify

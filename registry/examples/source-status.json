@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0",
+  "id": "org.example.public-books",
+  "checkedAt": "2026-07-22T00:00:00Z",
+  "profile": "discovery",
+  "status": "verified",
+  "protocolVersion": "1.4",
+  "stages": {
+    "discovery": { "status": "ok", "latencyMs": 120 },
+    "discover": { "status": "ok", "latencyMs": 250 },
+    "categories": { "status": "ok", "latencyMs": 90 },
+    "browse": { "status": "ok", "latencyMs": 180 }
+  },
+  "warnings": []
+}

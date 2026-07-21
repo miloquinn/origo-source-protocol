@@ -12,6 +12,7 @@ Schema 与工具。由第三方运营的 Registry 是独立服务，不受本项
 
 ```text
 registry/sources/<source-id>.json
+registry/status/<source-id>.json
 registry/generated/registry.json
 ```
 
@@ -22,12 +23,18 @@ registry/generated/registry.json
 `contentTypes`、`testQuery` 和可选的 `reportingUrl`。通过协议测试不证明内容合法、优质、
 已获授权或运营者可信。
 
+`registry/status/` 可以保存某书源最新的有界诊断记录，格式由
+`schemas/source-status.schema.json` 校验。记录只包含 profile、时间、阶段结果和有界
+延迟；不得包含读者 IP、正文、Cookie、凭据、内部 URL 或浏览器验证资料。状态文件属于
+Registry 元数据，不能替代书源自己的发现文档。
+
 ## 参考检查工具
 
 ```bash
 python scripts/registry_tool.py validate
 python scripts/registry_tool.py build --check
 python scripts/registry_tool.py check-source path/to/source-entry.json
+python scripts/registry_tool.py check-source path/to/source-entry.json --profile discovery
 ```
 
 这些工具只检查格式和网络安全边界，不认证内容权利。独立 Registry 运营者应采用至少与

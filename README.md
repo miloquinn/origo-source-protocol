@@ -98,6 +98,7 @@ openapi.yaml                  OpenAPI 3.1 API description
 schemas/discovery.schema.json Discovery-document JSON Schema
 examples/dart_server.dart     Runnable reference source
 tool/conformance_test.dart    End-to-end core conformance checks
+tool/discovery_conformance_test.dart Discovery Profile conformance checks
 GOVERNANCE.md                 Protocol change and release process
 ECOSYSTEM.md                  Adapter and federated registry architecture
 registry/                     Non-official registry reference format and tools
@@ -114,6 +115,7 @@ Run the local conformance checks with:
 
 ```bash
 dart run tool/conformance_test.dart
+dart run tool/discovery_conformance_test.dart
 ```
 
 Traditional book-source formats belong in server-side ORSP adapters rather than

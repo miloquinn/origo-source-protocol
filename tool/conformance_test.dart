@@ -36,16 +36,8 @@ Future<void> main() async {
     check(discoveryJson['protocolVersion'] == '1.4', 'protocol version');
     final capabilities = (discoveryJson['capabilities'] as List).toSet();
     check(
-      capabilities.containsAll([
-        'search',
-        'discover',
-        'categories',
-        'browse',
-        'detail',
-        'catalog',
-        'content',
-      ]),
-      'core and discovery capabilities are advertised',
+      capabilities.containsAll(['search', 'detail', 'catalog', 'content']),
+      'core reading capabilities are advertised',
     );
     final apiBase = Uri.parse(discoveryJson['apiBaseUrl'] as String);
     check(apiBase.path.endsWith('/'), 'apiBaseUrl ends in a slash');
@@ -76,48 +68,6 @@ Future<void> main() async {
     check(
       (discoveryJson['rightsStatement'] as String).isNotEmpty,
       'rightsStatement is present and non-empty',
-    );
-
-    final discover = await request(client, apiBase.resolve('v1/discover'));
-    check(discover.status == 200, 'discover returns 200');
-    final discoverSections = (discover.json as Map)['sections'] as List;
-    check(discoverSections.length == 2, 'discover returns curated sections');
-    check(
-      (discoverSections.first as Map)['id'] == 'featured',
-      'discover section IDs are stable',
-    );
-
-    final categories = await request(client, apiBase.resolve('v1/categories'));
-    check(categories.status == 200, 'categories returns 200');
-    final categoryItems = (categories.json as Map)['items'] as List;
-    check(categoryItems.length == 2, 'categories returns source categories');
-    check(
-      categoryItems.any((item) => (item as Map)['id'] == 'protocol'),
-      'category IDs are browseable',
-    );
-
-    final latest = await request(
-      client,
-      apiBase.resolve('v1/browse?sort=latest&page=1&pageSize=20'),
-      headers: {'X-Open-Reading-Protocol': '1.4'},
-    );
-    check(latest.status == 200, 'latest browse returns 200');
-    final latestItems = (latest.json as Map)['items'] as List;
-    check(
-      (latestItems.first as Map)['id'] == 'river-of-pages',
-      'latest browse ordering is deterministic',
-    );
-
-    final categoryBrowse = await request(
-      client,
-      apiBase.resolve('v1/browse?category=protocol&sort=popular'),
-    );
-    final categoryBrowseItems = (categoryBrowse.json as Map)['items'] as List;
-    check(categoryBrowse.status == 200, 'category browse returns 200');
-    check(categoryBrowseItems.length == 1, 'category browse filters books');
-    check(
-      (categoryBrowseItems.single as Map)['id'] == 'protocol-garden',
-      'category browse uses category IDs unchanged',
     );
 
     final searchPage1 = await request(
@@ -219,12 +169,6 @@ Future<void> main() async {
       apiBase.resolve('v1/search?q=test&page=0'),
     );
     checkError(invalidPage, 400, 'INVALID_PARAMETER', check);
-
-    final invalidSort = await request(
-      client,
-      apiBase.resolve('v1/browse?sort=random'),
-    );
-    checkError(invalidSort, 400, 'INVALID_PARAMETER', check);
 
     final missingBook = await request(
       client,

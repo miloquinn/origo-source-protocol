@@ -19,6 +19,16 @@ class RegistryToolTests(unittest.TestCase):
         )
         self.assertEqual(errors, [])
 
+    def test_diagnostic_example_matches_its_schema(self) -> None:
+        example = registry_tool.load_json(
+            registry_tool.ROOT / "registry" / "examples" / "source-status.json"
+        )
+        errors = registry_tool.format_validation_errors(
+            registry_tool.json_validator(registry_tool.STATUS_SCHEMA_PATH),
+            example,
+        )
+        self.assertEqual(errors, [])
+
     def test_global_ip_is_allowed(self) -> None:
         self.assertEqual(str(registry_tool.ensure_global_ip("8.8.8.8")), "8.8.8.8")
 

@@ -11,7 +11,7 @@ import ssl
 import sys
 import time
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote, urlencode, urljoin, urlsplit
@@ -27,6 +27,7 @@ SOURCE_SCHEMA_PATH = ROOT / "registry" / "schemas" / "source-entry.schema.json"
 REGISTRY_SCHEMA_PATH = ROOT / "registry" / "schemas" / "registry.schema.json"
 DISCOVERY_SCHEMA_PATH = ROOT / "schemas" / "discovery.schema.json"
 EXAMPLE_ENTRY_PATH = ROOT / "registry" / "examples" / "source-entry.json"
+STATUS_SCHEMA_PATH = ROOT / "registry" / "schemas" / "source-status.schema.json"
 
 CORE_CAPABILITIES = {"search", "detail", "catalog", "content"}
 REDIRECT_STATUSES = {301, 302, 303, 307, 308}
@@ -337,7 +338,7 @@ def require_id(value: Any, label: str) -> str:
     return value
 
 
-def check_source(path: Path) -> dict[str, Any]:
+def check_source(path: Path, profile: str = "core-reading") -> dict[str, Any]:
     validate_manifest_file(path)
     entry_validator = json_validator(SOURCE_SCHEMA_PATH)
     entry = load_json(path)
@@ -346,9 +347,11 @@ def check_source(path: Path) -> dict[str, Any]:
         raise RegistryError(f"Invalid source entry {path}:\n- " + "\n- ".join(errors))
 
     timings: dict[str, int] = {}
+    stages: dict[str, dict[str, Any]] = {}
     warnings: list[str] = []
     discovery, result = require_json(entry["discoveryUrl"], "Discovery")
     timings["discovery"] = result.elapsed_ms
+    stages["discovery"] = {"status": "ok", "latencyMs": result.elapsed_ms}
     discovery_errors = format_validation_errors(
         json_validator(DISCOVERY_SCHEMA_PATH),
         discovery,
@@ -369,6 +372,40 @@ def check_source(path: Path) -> dict[str, Any]:
         warnings.append("Registry languages are not all declared by discovery")
 
     api_base = discovery["apiBaseUrl"]
+    if profile == "discovery":
+        required = {"discover", "categories", "browse"}
+        if not required.issubset(capabilities):
+            missing = ", ".join(sorted(required - capabilities))
+            raise RegistryError(f"Discovery profile is missing capabilities: {missing}")
+        discover, result = require_json(checked_api_url(api_base, "v1/discover"), "Discover")
+        timings["discover"] = result.elapsed_ms
+        sections = discover.get("sections")
+        if not isinstance(sections, list) or not any(
+            isinstance(section, dict) and isinstance(section.get("items"), list) and section["items"]
+            for section in sections
+        ):
+            raise RegistryError("Discover did not return a non-empty section")
+        stages["discover"] = {"status": "ok", "latencyMs": result.elapsed_ms}
+
+        categories, result = require_json(checked_api_url(api_base, "v1/categories"), "Categories")
+        timings["categories"] = result.elapsed_ms
+        category_items = categories.get("items")
+        if not isinstance(category_items, list) or not category_items or not isinstance(category_items[0], dict):
+            raise RegistryError("Categories did not return a browseable category")
+        category_id = require_id(category_items[0].get("id"), "Category ID")
+        stages["categories"] = {"status": "ok", "latencyMs": result.elapsed_ms}
+
+        browse, result = require_json(
+            checked_api_url(api_base, "v1/browse", {"category": category_id, "page": "1", "pageSize": "1"}),
+            "Browse",
+        )
+        timings["browse"] = result.elapsed_ms
+        browse_items = browse.get("items")
+        if not isinstance(browse_items, list) or not browse_items:
+            raise RegistryError("Browse did not return a book for the declared category")
+        stages["browse"] = {"status": "ok", "latencyMs": result.elapsed_ms}
+        return diagnostic_report(entry["id"], profile, discovery["protocolVersion"], stages, warnings)
+
     search_url = checked_api_url(
         api_base,
         "v1/search",
@@ -376,6 +413,7 @@ def check_source(path: Path) -> dict[str, Any]:
     )
     search, result = require_json(search_url, "Search")
     timings["search"] = result.elapsed_ms
+    stages["search"] = {"status": "ok", "latencyMs": result.elapsed_ms}
     search_items = search.get("items")
     if not isinstance(search_items, list) or not search_items:
         raise RegistryError("testQuery did not return a book")
@@ -387,6 +425,7 @@ def check_source(path: Path) -> dict[str, Any]:
     detail_url = checked_api_url(api_base, f"v1/books/{quote(book_id, safe='')}")
     detail, result = require_json(detail_url, "Book detail")
     timings["detail"] = result.elapsed_ms
+    stages["detail"] = {"status": "ok", "latencyMs": result.elapsed_ms}
     if detail.get("id") != book_id:
         raise RegistryError("Book detail ID does not match the search result")
 
@@ -397,6 +436,7 @@ def check_source(path: Path) -> dict[str, Any]:
     )
     catalog, result = require_json(catalog_url, "Chapter catalog")
     timings["catalog"] = result.elapsed_ms
+    stages["catalog"] = {"status": "ok", "latencyMs": result.elapsed_ms}
     chapter_items = catalog.get("items")
     if not isinstance(chapter_items, list) or not chapter_items:
         raise RegistryError("The selected test book has no chapter")
@@ -411,6 +451,7 @@ def check_source(path: Path) -> dict[str, Any]:
     )
     content, result = require_json(content_url, "Chapter content")
     timings["content"] = result.elapsed_ms
+    stages["content"] = {"status": "ok", "latencyMs": result.elapsed_ms}
     if content.get("bookId") != book_id or content.get("chapterId") != chapter_id:
         raise RegistryError("Chapter content IDs do not match the requested resource")
     if content.get("contentType") not in {"text/plain", "text/markdown", "text/html"}:
@@ -418,18 +459,34 @@ def check_source(path: Path) -> dict[str, Any]:
     if not isinstance(content.get("content"), str):
         raise RegistryError("Chapter content must be a string")
 
-    return {
-        "id": entry["id"],
+    return diagnostic_report(entry["id"], profile, discovery["protocolVersion"], stages, warnings)
+
+
+def diagnostic_report(
+    source_id: str,
+    profile: str,
+    protocol_version: str,
+    stages: dict[str, dict[str, Any]],
+    warnings: list[str],
+) -> dict[str, Any]:
+    report = {
+        "schemaVersion": "1.0",
+        "id": source_id,
         "status": "verified",
-        "protocolVersion": discovery["protocolVersion"],
-        "checkedAt": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
-        "latencyMs": timings,
+        "profile": profile,
+        "protocolVersion": protocol_version,
+        "checkedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "stages": stages,
         "warnings": warnings,
     }
+    errors = format_validation_errors(json_validator(STATUS_SCHEMA_PATH), report)
+    if errors:
+        raise RegistryError("Generated diagnostic record is invalid:\n- " + "\n- ".join(errors))
+    return report
 
 
 def check_source_command(args: argparse.Namespace) -> None:
-    report = check_source(Path(args.entry).absolute())
+    report = check_source(Path(args.entry).absolute(), args.profile)
     if args.status_output:
         Path(args.status_output).write_text(
             json.dumps(report, ensure_ascii=False, indent=2) + "\n",
@@ -451,13 +508,13 @@ def check_all_command(args: argparse.Namespace) -> None:
                 {
                     "id": path.stem,
                     "status": "offline",
-                    "checkedAt": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+                    "checkedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                     "error": str(error),
                 }
             )
     output = {
         "schemaVersion": "1.0",
-        "checkedAt": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        "checkedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "sources": reports,
     }
     if args.status_output:
@@ -488,6 +545,7 @@ def parser() -> argparse.ArgumentParser:
     )
     check_source_parser.add_argument("entry", help="path to a source entry JSON file")
     check_source_parser.add_argument("--status-output")
+    check_source_parser.add_argument("--profile", choices=["core-reading", "discovery"], default="core-reading")
     check_source_parser.set_defaults(function=check_source_command)
 
     check_all = commands.add_parser(

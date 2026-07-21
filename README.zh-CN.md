@@ -134,6 +134,7 @@ schemas/discovery.schema.json   发现文档 JSON Schema
 examples/dart_server.dart       可运行的 Dart 参考书源
 examples/open-reading-source.json 发现文档示例
 tool/conformance_test.dart      端到端核心一致性测试
+tool/discovery_conformance_test.dart Discovery Profile 一致性测试
 GOVERNANCE.zh-CN.md             协议变更与发布治理
 ECOSYSTEM.zh-CN.md              适配器与联邦书源目录架构
 registry/                       非官方 Registry 参考格式与工具
@@ -148,6 +149,7 @@ registry/                       非官方 Registry 参考格式与工具
 
 ```bash
 dart run tool/conformance_test.dart
+dart run tool/discovery_conformance_test.dart
 ```
 
 同一主版本内应保持向后兼容。新增可选字段通常可以继续使用 1.x；修改必填字段、接口
