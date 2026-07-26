@@ -92,7 +92,7 @@ Future<void> main() async {
 
 Future<HttpClientResponse> _request(HttpClient client, Uri uri) async {
   final request = await client.getUrl(uri);
-  request.headers.set('X-Open-Reading-Protocol', '1.4');
+  request.headers.set('X-Open-Reading-Protocol', '1.5');
   return request.close();
 }
 

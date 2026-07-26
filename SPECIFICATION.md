@@ -1,4 +1,4 @@
-# Open Reading Source Protocol 1.4
+# Open Reading Source Protocol 1.5
 
 [简体中文翻译](SPECIFICATION.zh-CN.md)
 
@@ -11,19 +11,19 @@ only when, they appear in all capitals.
 ## 1. Scope and design goals
 
 Open Reading Source Protocol (ORSP) defines a safe HTTP boundary between a
-reading client and an independently operated content source. ORSP 1.4 covers:
+reading client and an independently operated content source. ORSP 1.5 covers:
 
 - source discovery;
 - book search and metadata;
-- optional curated discovery, categories, and browsing;
+- optional curated discovery, categories, browsing, and multiple rankings;
 - chapter catalogs;
 - chapter content retrieval.
 
-ORSP 1.4 covers public HTTP(S) sources that do not require user authentication.
+ORSP 1.5 covers public HTTP(S) sources that do not require user authentication.
 It does not define executable scraping rules. A source MAY use an authorized
 adapter internally, but clients only receive data described by this protocol.
 
-The core reading profile is intentionally small. A conforming ORSP 1.4 source
+The core reading profile is intentionally small. A conforming ORSP 1.5 source
 MUST implement the complete discovery, search, detail, catalog, and content
 path. Optional features are advertised as capabilities and MUST NOT change the
 meaning of core fields or endpoints.
@@ -54,7 +54,7 @@ SHOULD also list every implemented version in the optional
 `supportedVersions` discovery member (Section 3). Endpoint relations carry
 their own major-version prefix (`v1/...`), so one `apiBaseUrl` can serve
 several major versions side by side. Complete cross-major negotiation rules
-are reserved future work (Section 16); within major version 1,
+are reserved future work (Section 17); within major version 1,
 `supportedVersions` is informative.
 
 Clients MUST ignore unknown JSON object members. Clients MUST ignore unknown
@@ -81,7 +81,7 @@ Required discovery members:
 | Member | Requirement |
 | --- | --- |
 | `protocol` | MUST equal `open-reading-source` |
-| `protocolVersion` | ORSP `MAJOR.MINOR`; this specification uses `1.4` |
+| `protocolVersion` | ORSP `MAJOR.MINOR`; this specification uses `1.5` |
 | `id` | Stable globally unique source identifier |
 | `name` | Human-readable source name |
 | `apiBaseUrl` | Absolute HTTP(S) URL ending in `/` |
@@ -89,13 +89,14 @@ Required discovery members:
 
 Core capability tokens are `search`, `detail`, `catalog`, and `content`.
 
-ORSP 1.4 defines three optional standard capability tokens:
+ORSP 1.5 defines four optional standard capability tokens:
 
 | Capability | Endpoint relation | Purpose |
 | --- | --- | --- |
 | `discover` | `v1/discover` | Curated shelves such as featured or popular books |
 | `categories` | `v1/categories` | Stable category identifiers and display names |
 | `browse` | `v1/browse` | Paginated browsing by category or standard sort |
+| `rankings` | `v1/rankings` | Multiple named, paginated ranking lists |
 
 A source declaring `categories` MUST also declare `browse`, because category
 identifiers are defined for use with the browse endpoint. A source MAY declare
@@ -115,12 +116,12 @@ follow BCP 47, such as `en`, `zh-CN`, or `sr-Latn`.
 
 `supportedVersions`, when present, is a non-empty array of ORSP
 `MAJOR.MINOR` version strings that MUST include `protocolVersion`. It lets a
-multi-version source state every protocol version it implements. ORSP 1.4
+multi-version source state every protocol version it implements. ORSP 1.5
 clients MAY use it for diagnostics and MUST NOT require it.
 
 `maxCatalogPageSize`, when present, is an integer between 1 and 1000
 declaring the largest `pageSize` the source accepts on the chapter-catalog
-endpoint (Section 11). When absent, the limit is 100.
+endpoint (Section 12). When absent, the limit is 100.
 
 `operatorName`, `contactUrl`, `contentLicense`, and `rightsStatement` are
 rights-transparency members. `operatorName` identifies the entity that
@@ -199,7 +200,7 @@ how to interpret it.
 - Core endpoints use `GET` and MUST be safe and idempotent.
 - Clients SHOULD send `Accept: application/json`.
 - Clients SHOULD send `X-Open-Reading-Protocol` with their highest supported
-  ORSP 1.x version, for example `1.4`.
+  ORSP 1.x version, for example `1.5`.
 - Sources MAY return `X-Open-Reading-Protocol` containing the source protocol
   version.
 - A client or operator probe MAY send `X-Open-Reading-Request-Purpose:
@@ -320,7 +321,7 @@ Each section MAY contain at most 100 books. Book objects use the same model as
 search and detail. Section ordering and item ranking are source-defined but
 SHOULD be deterministic for an unchanged dataset. Clients MUST NOT interpret a
 section as personalized unless the source explicitly documents that behavior;
-ORSP 1.4 does not define authentication or user profiles.
+ORSP 1.5 does not define authentication or user profiles.
 
 ## 8. Categories (optional)
 
@@ -358,7 +359,7 @@ GET v1/browse?category={categoryId}&sort={sort}&page={page}&pageSize={pageSize}
 characters and identify a category returned by `v1/categories`. A source that
 does not declare `categories` MUST return `400` if `category` is supplied.
 
-`sort` is optional and defaults to `latest`. ORSP 1.4 defines:
+`sort` is optional and defaults to `latest`. ORSP 1.5 defines:
 
 - `latest`: descending by the book's `updatedAt`, with books lacking
   `updatedAt` ordered after dated books;
@@ -393,7 +394,108 @@ aggregate client MAY use it as a cross-source freshness hint, but MUST NOT treat
 timestamps from independently operated sources as a globally authoritative
 ranking.
 
-## 10. Book details
+## 10. Rankings (optional)
+
+Sources declaring `rankings` MUST implement both ranking endpoint relations:
+
+```text
+GET v1/rankings
+GET v1/rankings/{rankingId}?page={page}&pageSize={pageSize}
+```
+
+The ranking collection response is:
+
+```json
+{
+  "items": [
+    {
+      "id": "weekly-popular",
+      "title": "Weekly Popular",
+      "description": "Most-read books during the current week",
+      "period": "weekly",
+      "categoryId": "fiction"
+    },
+    {
+      "id": "monthly-new",
+      "title": "Monthly New Releases",
+      "period": "monthly"
+    }
+  ]
+}
+```
+
+`items` is required and MUST contain at most 100 rankings. Each ranking MUST
+contain `id` and `title`. Ranking IDs follow the opaque wire-ID rules in
+Section 4.2, are scoped to the source, and SHOULD remain stable when display
+metadata changes. `description`, `period`, and `categoryId` are optional.
+
+When present, `period` is one of `realtime`, `daily`, `weekly`, `monthly`, or
+`all-time`. A ranking whose period does not match one of these values MUST omit
+`period` rather than inventing another value. When present, `categoryId` MUST
+identify a category returned by `v1/categories`; therefore a source that does
+not declare `categories` MUST omit `categoryId`. Ranking collection ordering is
+source-defined and SHOULD be deterministic for an unchanged collection.
+
+A ranking page response is:
+
+```json
+{
+  "ranking": {
+    "id": "weekly-popular",
+    "title": "Weekly Popular",
+    "period": "weekly"
+  },
+  "snapshotId": "weekly-popular-2026-w30",
+  "snapshotAt": "2026-07-26T00:00:00Z",
+  "items": [
+    {
+      "rank": 1,
+      "previousRank": 3,
+      "score": 9850,
+      "scoreLabel": "9,850 reads",
+      "book": {
+        "id": "book-1001",
+        "title": "Example Book"
+      }
+    }
+  ],
+  "page": 1,
+  "pageSize": 20,
+  "total": 1,
+  "hasMore": false
+}
+```
+
+`ranking`, `snapshotId`, `items`, `page`, `pageSize`, and `hasMore` are
+required. `ranking` uses the same ranking object returned by `v1/rankings`.
+`snapshotId` is an opaque identifier for the ordered ranking snapshot and MUST
+remain unchanged while ranks and ordering are unchanged. `snapshotAt` is
+optional and records when the snapshot was produced. `total` is optional.
+
+Each entry MUST contain `rank` and `book`. `rank` is the one-based absolute
+position in the complete ranking, not the position within the current page.
+Entries MUST be returned in ascending `rank` order, ranks MUST be unique within
+a snapshot, and the first entry on page N MUST have rank
+`(N - 1) * pageSize + 1`. `book` uses the shared book model. `previousRank`,
+`score`, and `scoreLabel` are optional. `previousRank`, when present, is the
+book's one-based position in the source-defined previous comparable snapshot.
+The meaning and scale of `score` and the display text in `scoreLabel` are
+source-defined; clients MUST NOT compare them across different rankings or
+sources.
+
+`page` and `pageSize` use the search pagination rules. Sources SHOULD return an
+`ETag` for the collection and every ranking page. A client loading several
+pages MUST compare `snapshotId` values and SHOULD restart from page 1 if the
+snapshot changes, to avoid displaying ranks from different snapshots. An
+unknown well-formed ranking ID MUST return `404` with `RANKING_NOT_FOUND`.
+
+Ranks are authoritative only inside the tuple of source, ranking ID, and
+snapshot ID. An aggregate client MUST retain that attribution and MUST NOT
+present ranks from independently operated sources as one globally authoritative
+ranking. It MAY show source rankings side by side or build an explicitly
+client-generated, source-balanced aggregate view.
+
+## 11. Book details
 
 Endpoint relation:
 
@@ -405,7 +507,7 @@ The response uses the same book object as search and MAY provide a longer
 description or additional optional metadata. Existing member meanings MUST be
 identical in search and detail responses.
 
-## 11. Chapter catalog
+## 12. Chapter catalog
 
 Endpoint relation:
 
@@ -446,7 +548,7 @@ Catalog pages MUST be sorted by `(order, id)`. A source SHOULD return an `ETag`
 for each catalog page. A client that observes a changed catalog validator while
 loading multiple pages SHOULD restart catalog loading to avoid a mixed view.
 
-## 12. Chapter content
+## 13. Chapter content
 
 Endpoint relation:
 
@@ -468,7 +570,7 @@ GET v1/books/{bookId}/chapters/{chapterId}
 `bookId` and `chapterId` MUST exactly match the requested resource. `baseUrl` is
 optional and, when present, MUST be an absolute HTTP(S) URL.
 
-ORSP 1.4 content types are:
+ORSP 1.5 content types are:
 
 - `text/plain`;
 - `text/markdown`, interpreted as CommonMark;
@@ -482,7 +584,7 @@ remove event-handler attributes, dangerous URL schemes, embedded frames, and
 active form controls. Clients MUST still sanitize HTML before rendering it.
 Raw HTML embedded in Markdown MUST receive the same treatment.
 
-## 13. Errors
+## 14. Errors
 
 Core status codes:
 
@@ -490,7 +592,7 @@ Core status codes:
 | --- | --- |
 | `304` | Selected representation has not changed |
 | `400` | Invalid request parameter or malformed ID |
-| `404` | Book, chapter, or route not found |
+| `404` | Book, chapter, ranking, or route not found |
 | `405` | HTTP method not supported |
 | `429` | Rate limited; `Retry-After` SHOULD be included |
 | `500` | Internal source error |
@@ -514,13 +616,14 @@ separated by underscores. `message` is intended for developers and diagnostics;
 clients SHOULD NOT assume it is localized. `retryable` and `requestId` are
 optional. Clients MUST ignore unknown error members and unknown error codes.
 
-ORSP 1.4 defines these standard error codes:
+ORSP 1.5 defines these standard error codes:
 
 | Code | Status | Condition |
 | --- | --- | --- |
 | `INVALID_PARAMETER` | `400` | A known query parameter or ID is missing, malformed, or out of range |
 | `BOOK_NOT_FOUND` | `404` | The book ID does not identify a book |
 | `CHAPTER_NOT_FOUND` | `404` | The chapter ID does not identify a chapter of the book |
+| `RANKING_NOT_FOUND` | `404` | The ranking ID does not identify a ranking |
 | `ROUTE_NOT_FOUND` | `404` | The path is not an endpoint of this source |
 | `METHOD_NOT_ALLOWED` | `405` | The HTTP method is not supported |
 | `RATE_LIMITED` | `429` | The client exceeded a request-rate limit |
@@ -536,7 +639,7 @@ Parameter-level detail belongs in `message`.
 Sources MUST NOT include credentials, cookies, internal URLs, stack traces, or
 other sensitive implementation details in error responses.
 
-## 14. Security and privacy
+## 15. Security and privacy
 
 Sources MUST validate known query parameters and IDs and SHOULD impose rate,
 response-size, execution-time, and upstream-fetch limits. Production sources
@@ -554,27 +657,33 @@ required for native clients.
 ORSP does not grant copyright or access rights. Source operators are
 responsible for distributing only content they are authorized to provide.
 
-## 15. Conformance
+## 16. Conformance
 
-An implementation claiming `ORSP 1.4 Core Reading` conformance MUST:
+An implementation claiming `ORSP 1.5 Core Reading` conformance MUST:
 
 1. implement discovery and all four core capabilities;
 2. satisfy the normative requirements in this document;
 3. pass the official core conformance suite for the claimed version;
 4. disclose optional extension capabilities separately.
 
-An implementation claiming `ORSP 1.4 Discovery` conformance MUST additionally
+An implementation claiming `ORSP 1.5 Discovery` conformance MUST additionally
 implement and advertise `discover`, `categories`, and `browse`, and pass the
 official discovery-profile checks. A source MAY implement only a subset of the
 optional standard capabilities without claiming the complete Discovery
 profile.
 
+An implementation claiming `ORSP 1.5 Rankings` conformance MUST additionally
+implement and advertise `rankings`, expose at least two ranking definitions,
+and pass the official rankings-profile checks. The rankings profile is
+independent of the Discovery profile; `categories` is required only when a
+ranking uses `categoryId`.
+
 Passing syntax validation alone is not evidence of protocol conformance.
 Conformance reports SHOULD record the test-suite version and execution date.
 
-## 16. Reserved future work
+## 17. Reserved future work
 
-The following features are intentionally outside ORSP 1.4 and require a future
+The following features are intentionally outside ORSP 1.5 and require a future
 minor version, major version, or companion specification:
 
 - authentication and paid-content authorization;

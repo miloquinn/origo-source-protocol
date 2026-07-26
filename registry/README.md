@@ -43,6 +43,7 @@ python scripts/registry_tool.py validate
 python scripts/registry_tool.py build --check
 python scripts/registry_tool.py check-source path/to/source-entry.json
 python scripts/registry_tool.py check-source path/to/source-entry.json --profile discovery
+python scripts/registry_tool.py check-source path/to/source-entry.json --profile rankings
 ```
 
 These tools validate format and network-safety invariants. They do not certify

@@ -24,8 +24,13 @@ jobs:
         run: >-
           dart format --output=none --set-exit-if-changed
           examples/dart_server.dart tool/conformance_test.dart
+          tool/discovery_conformance_test.dart
+          tool/rankings_conformance_test.dart
       - name: Analyze Dart implementation
-        run: dart analyze examples/dart_server.dart tool/conformance_test.dart
+        run: >-
+          dart analyze examples/dart_server.dart tool/conformance_test.dart
+          tool/discovery_conformance_test.dart
+          tool/rankings_conformance_test.dart
       - name: Validate schemas, examples, and OpenAPI
         run: python scripts/validate_contracts.py
       - name: Validate reference registry tooling
@@ -35,3 +40,7 @@ jobs:
           python scripts/test_registry_tool.py
       - name: Run core conformance tests
         run: dart run tool/conformance_test.dart
+      - name: Run Discovery Profile conformance tests
+        run: dart run tool/discovery_conformance_test.dart
+      - name: Run Rankings Profile conformance tests
+        run: dart run tool/rankings_conformance_test.dart

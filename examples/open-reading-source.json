@@ -1,7 +1,7 @@
 {
   "protocol": "open-reading-source",
-  "protocolVersion": "1.4",
-  "supportedVersions": ["1.4"],
+  "protocolVersion": "1.5",
+  "supportedVersions": ["1.4", "1.5"],
   "id": "org.example.public-books",
   "name": "Example Public Books",
   "description": "A minimal Open Reading compatible source",
@@ -19,6 +19,7 @@
     "discover",
     "categories",
     "browse",
+    "rankings",
     "detail",
     "catalog",
     "content"

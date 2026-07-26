@@ -268,7 +268,7 @@ def fetch(url: str) -> HttpResult:
                         "Accept": "application/json",
                         "Accept-Encoding": "identity",
                         "User-Agent": "ORSP-Registry-Validator/1.0",
-                        "X-Open-Reading-Protocol": "1.4",
+                        "X-Open-Reading-Protocol": "1.5",
                     },
                 )
                 response = connection.getresponse()
@@ -406,6 +406,45 @@ def check_source(path: Path, profile: str = "core-reading") -> dict[str, Any]:
         stages["browse"] = {"status": "ok", "latencyMs": result.elapsed_ms}
         return diagnostic_report(entry["id"], profile, discovery["protocolVersion"], stages, warnings)
 
+    if profile == "rankings":
+        if "rankings" not in capabilities:
+            raise RegistryError("Rankings profile is missing capability: rankings")
+        collection, result = require_json(
+            checked_api_url(api_base, "v1/rankings"),
+            "Rankings",
+        )
+        ranking_items = collection.get("items")
+        if (
+            not isinstance(ranking_items, list)
+            or len(ranking_items) < 2
+            or not isinstance(ranking_items[0], dict)
+        ):
+            raise RegistryError("Rankings did not return at least two definitions")
+        ranking_id = require_id(ranking_items[0].get("id"), "Ranking ID")
+        stages["rankings"] = {"status": "ok", "latencyMs": result.elapsed_ms}
+
+        ranking_page, result = require_json(
+            checked_api_url(
+                api_base,
+                f"v1/rankings/{quote(ranking_id, safe='')}",
+                {"page": "1", "pageSize": "1"},
+            ),
+            "Ranking page",
+        )
+        ranking = ranking_page.get("ranking")
+        if not isinstance(ranking, dict) or ranking.get("id") != ranking_id:
+            raise RegistryError("Ranking page definition does not match the requested ranking")
+        require_id(ranking_page.get("snapshotId"), "Ranking snapshot ID")
+        entries = ranking_page.get("items")
+        if not isinstance(entries, list) or not entries or not isinstance(entries[0], dict):
+            raise RegistryError("Ranking page did not return an entry")
+        first_entry = entries[0]
+        if first_entry.get("rank") != 1 or not isinstance(first_entry.get("book"), dict):
+            raise RegistryError("Ranking page did not return a valid first-ranked book")
+        require_id(first_entry["book"].get("id"), "Ranked book ID")
+        stages["ranking"] = {"status": "ok", "latencyMs": result.elapsed_ms}
+        return diagnostic_report(entry["id"], profile, discovery["protocolVersion"], stages, warnings)
+
     search_url = checked_api_url(
         api_base,
         "v1/search",
@@ -455,7 +494,7 @@ def check_source(path: Path, profile: str = "core-reading") -> dict[str, Any]:
     if content.get("bookId") != book_id or content.get("chapterId") != chapter_id:
         raise RegistryError("Chapter content IDs do not match the requested resource")
     if content.get("contentType") not in {"text/plain", "text/markdown", "text/html"}:
-        raise RegistryError("Chapter contentType is not supported by ORSP 1.4")
+        raise RegistryError("Chapter contentType is not supported by ORSP 1.5")
     if not isinstance(content.get("content"), str):
         raise RegistryError("Chapter content must be a string")
 
@@ -545,7 +584,11 @@ def parser() -> argparse.ArgumentParser:
     )
     check_source_parser.add_argument("entry", help="path to a source entry JSON file")
     check_source_parser.add_argument("--status-output")
-    check_source_parser.add_argument("--profile", choices=["core-reading", "discovery"], default="core-reading")
+    check_source_parser.add_argument(
+        "--profile",
+        choices=["core-reading", "discovery", "rankings"],
+        default="core-reading",
+    )
     check_source_parser.set_defaults(function=check_source_command)
 
     check_all = commands.add_parser(

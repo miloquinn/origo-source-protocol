@@ -36,30 +36,38 @@ GET {apiBaseUrl}v1/books/{bookId}/chapters?page=1&pageSize=100
 GET {apiBaseUrl}v1/books/{bookId}/chapters/{chapterId}
 ```
 
-ORSP 1.4 sources may additionally advertise a standard discovery profile:
+ORSP 1.5 sources may additionally advertise standard Discovery and Rankings
+profiles:
 
 ```text
 GET {apiBaseUrl}v1/discover
 GET {apiBaseUrl}v1/categories
 GET {apiBaseUrl}v1/browse?category={categoryId}&sort=latest&page=1&pageSize=20
+GET {apiBaseUrl}v1/rankings
+GET {apiBaseUrl}v1/rankings/{rankingId}?page=1&pageSize=20
 ```
 
 These endpoint relations are resolved against the discovered `apiBaseUrl`.
-ORSP 1.4 Core Reading sources implement all four core capabilities. Discovery,
-categories, and browsing are optional and capability-gated, so existing ORSP
-1.0 sources remain compatible.
+ORSP 1.5 Core Reading sources implement all four core capabilities. Discovery,
+categories, browsing, and multiple rankings are optional and capability-gated,
+so existing ORSP 1.x sources remain compatible.
 
 Readers may aggregate several sources into an all-sources discovery view and
 offer a single-source filter. Aggregate interfaces retain source attribution,
 keep IDs source-scoped, preserve each source's internal ranking, and use a
 source-balanced merge for latest or popular feeds.
 
+The optional `rankings` capability exposes multiple named, paginated ranking
+snapshots such as weekly popularity and monthly new releases. Rank values stay
+scoped to their source, ranking ID, and snapshot; readers do not treat metrics
+from independent sources as one authoritative global chart.
+
 Example discovery document:
 
 ```json
 {
   "protocol": "open-reading-source",
-  "protocolVersion": "1.4",
+  "protocolVersion": "1.5",
   "id": "org.example.public-books",
   "name": "Example Public Books",
   "description": "Public-domain books maintained by Example.org",
@@ -71,7 +79,7 @@ Example discovery document:
   "languages": ["en"],
   "maxCatalogPageSize": 200,
   "capabilities": [
-    "search", "discover", "categories", "browse",
+    "search", "discover", "categories", "browse", "rankings",
     "detail", "catalog", "content"
   ]
 }
@@ -94,11 +102,14 @@ ORSP-compatible reader. Android emulators should use `http://10.0.2.2:8787`.
 ```text
 SPECIFICATION.md              Normative protocol specification
 OEP-0001-discovery.md         Historical ORSP 1.1 discovery proposal and compatibility analysis
+OEP-0003-registry-diagnostics.md Candidate registry diagnostics and profile checks
+OEP-0004-rankings.md          ORSP 1.5 multiple-ranking proposal and compatibility analysis
 openapi.yaml                  OpenAPI 3.1 API description
 schemas/discovery.schema.json Discovery-document JSON Schema
 examples/dart_server.dart     Runnable reference source
 tool/conformance_test.dart    End-to-end core conformance checks
 tool/discovery_conformance_test.dart Discovery Profile conformance checks
+tool/rankings_conformance_test.dart Rankings Profile conformance checks
 GOVERNANCE.md                 Protocol change and release process
 ECOSYSTEM.md                  Adapter and federated registry architecture
 registry/                     Non-official registry reference format and tools
@@ -106,7 +117,7 @@ registry/                     Non-official registry reference format and tools
 
 ## Status
 
-Protocol version `1.4` is a candidate draft. Its compatibility rules,
+Protocol version `1.5` is a candidate draft. Its compatibility rules,
 machine-readable contracts, reference source, and core conformance tests are
 now developed together. Independent reader and source implementations are
 welcome before the specification is declared stable.
@@ -116,6 +127,7 @@ Run the local conformance checks with:
 ```bash
 dart run tool/conformance_test.dart
 dart run tool/discovery_conformance_test.dart
+dart run tool/rankings_conformance_test.dart
 ```
 
 Traditional book-source formats belong in server-side ORSP adapters rather than

@@ -29,6 +29,20 @@ class RegistryToolTests(unittest.TestCase):
         )
         self.assertEqual(errors, [])
 
+    def test_rankings_diagnostic_profile_matches_schema(self) -> None:
+        report = registry_tool.diagnostic_report(
+            "org.example.public-books",
+            "rankings",
+            "1.5",
+            {
+                "discovery": {"status": "ok", "latencyMs": 1},
+                "rankings": {"status": "ok", "latencyMs": 1},
+                "ranking": {"status": "ok", "latencyMs": 1},
+            },
+            [],
+        )
+        self.assertEqual(report["profile"], "rankings")
+
     def test_global_ip_is_allowed(self) -> None:
         self.assertEqual(str(registry_tool.ensure_global_ip("8.8.8.8")), "8.8.8.8")
 

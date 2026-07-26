@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-const protocolVersion = '1.4';
+const protocolVersion = '1.5';
 const maxCatalogPageSize = 200;
 final _opaqueIdPattern = RegExp(r'^[A-Za-z0-9._~-]{1,200}$');
 
@@ -68,7 +68,7 @@ class ReferenceSourceServer {
       _sendJson(request, 200, {
         'protocol': 'open-reading-source',
         'protocolVersion': protocolVersion,
-        'supportedVersions': [protocolVersion],
+        'supportedVersions': ['1.4', protocolVersion],
         'id': 'dev.open-reading.reference-source',
         'name': 'ORSP Reference Source',
         'description': 'Original sample content for protocol development.',
@@ -88,6 +88,7 @@ class ReferenceSourceServer {
           'discover',
           'categories',
           'browse',
+          'rankings',
           'detail',
           'catalog',
           'content',
@@ -105,6 +106,27 @@ class ReferenceSourceServer {
     }
     if (path == '/api/v1/browse') {
       _browse(request);
+      return;
+    }
+    if (path == '/api/v1/rankings') {
+      _rankings(request);
+      return;
+    }
+    if (segments.length == 4 &&
+        segments[0] == 'api' &&
+        segments[1] == 'v1' &&
+        segments[2] == 'rankings') {
+      final rankingId = segments[3];
+      if (!_validId(rankingId)) {
+        _error(request, 400, 'INVALID_PARAMETER', 'Malformed ranking ID');
+        return;
+      }
+      final ranking = rankings[rankingId];
+      if (ranking == null) {
+        _error(request, 404, 'RANKING_NOT_FOUND', 'Unknown ranking ID');
+        return;
+      }
+      _ranking(request, ranking);
       return;
     }
     if (path == '/api/v1/search') {
@@ -267,6 +289,41 @@ class ReferenceSourceServer {
     });
   }
 
+  void _rankings(HttpRequest request) {
+    _sendJson(request, 200, {
+      'items': rankings.values.map((ranking) => ranking.definition).toList(),
+    });
+  }
+
+  void _ranking(HttpRequest request, RankingData ranking) {
+    final pagination = _pagination(request);
+    if (pagination == null) return;
+
+    final end = pagination.end.clamp(0, ranking.entries.length);
+    final items = <Map<String, Object>>[];
+    for (var index = pagination.start; index < end; index++) {
+      final placement = ranking.entries[index];
+      final book = books[placement.bookId];
+      if (book == null) {
+        throw StateError(
+          'Ranking references unknown book: ${placement.bookId}',
+        );
+      }
+      items.add(placement.toJson(rank: index + 1, book: book.metadata));
+    }
+
+    _sendJson(request, 200, {
+      'ranking': ranking.definition,
+      'snapshotId': ranking.snapshotId,
+      'snapshotAt': ranking.snapshotAt,
+      'items': items,
+      'page': pagination.page,
+      'pageSize': pagination.pageSize,
+      'total': ranking.entries.length,
+      'hasMore': pagination.end < ranking.entries.length,
+    });
+  }
+
   void _catalog(HttpRequest request, BookData book) {
     final pagination = _pagination(
       request,
@@ -420,6 +477,61 @@ class ChapterData {
   };
 }
 
+class RankingData {
+  final String id;
+  final String title;
+  final String description;
+  final String period;
+  final String? categoryId;
+  final String snapshotId;
+  final String snapshotAt;
+  final List<RankingPlacement> entries;
+
+  const RankingData({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.period,
+    this.categoryId,
+    required this.snapshotId,
+    required this.snapshotAt,
+    required this.entries,
+  });
+
+  Map<String, Object> get definition => {
+    'id': id,
+    'title': title,
+    'description': description,
+    'period': period,
+    if (categoryId != null) 'categoryId': categoryId!,
+  };
+}
+
+class RankingPlacement {
+  final String bookId;
+  final int? previousRank;
+  final num? score;
+  final String? scoreLabel;
+
+  const RankingPlacement(
+    this.bookId, {
+    this.previousRank,
+    this.score,
+    this.scoreLabel,
+  });
+
+  Map<String, Object> toJson({
+    required int rank,
+    required Map<String, Object> book,
+  }) => {
+    'rank': rank,
+    if (previousRank != null) 'previousRank': previousRank!,
+    if (score != null) 'score': score!,
+    if (scoreLabel != null) 'scoreLabel': scoreLabel!,
+    'book': book,
+  };
+}
+
 const books = <String, BookData>{
   'protocol-garden': BookData(
     {
@@ -470,6 +582,44 @@ const categoryDefinitions = <String, String>{
 const bookPopularity = <Object?, int>{
   'protocol-garden': 100,
   'river-of-pages': 80,
+};
+
+const rankings = <String, RankingData>{
+  'weekly-popular': RankingData(
+    id: 'weekly-popular',
+    title: 'Weekly Popular',
+    description: 'Most-read books in the current weekly snapshot.',
+    period: 'weekly',
+    snapshotId: 'weekly-popular-2026-w30',
+    snapshotAt: '2026-07-26T00:00:00Z',
+    entries: [
+      RankingPlacement(
+        'protocol-garden',
+        previousRank: 2,
+        score: 100,
+        scoreLabel: '100 reads',
+      ),
+      RankingPlacement(
+        'river-of-pages',
+        previousRank: 1,
+        score: 80,
+        scoreLabel: '80 reads',
+      ),
+    ],
+  ),
+  'monthly-new': RankingData(
+    id: 'monthly-new',
+    title: 'Monthly New Releases',
+    description: 'Recently added original books in the monthly snapshot.',
+    period: 'monthly',
+    categoryId: 'original',
+    snapshotId: 'monthly-new-2026-07',
+    snapshotAt: '2026-07-26T00:00:00Z',
+    entries: [
+      RankingPlacement('river-of-pages', score: 2, scoreLabel: '2 chapters'),
+      RankingPlacement('protocol-garden', score: 2, scoreLabel: '2 chapters'),
+    ],
+  ),
 };
 
 Future<void> main(List<String> arguments) async {

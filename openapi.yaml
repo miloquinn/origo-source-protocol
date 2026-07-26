@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: Open Reading Source Protocol
-  version: '1.4'
-  description: Machine-readable contract for ORSP 1.4 Core Reading and optional Discovery profiles.
+  version: '1.5'
+  description: Machine-readable contract for ORSP 1.5 Core Reading, Discovery, and Rankings profiles.
   license:
     name: MIT
     identifier: MIT
@@ -76,6 +76,51 @@ paths:
               schema: { $ref: '#/components/schemas/SearchPage' }
         '304': { $ref: '#/components/responses/NotModified' }
         '400': { $ref: '#/components/responses/BadRequest' }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /v1/rankings:
+    get:
+      operationId: listRankings
+      summary: List source-defined ranking resources
+      parameters:
+        - $ref: '#/components/parameters/ProtocolVersion'
+        - $ref: '#/components/parameters/RequestPurpose'
+      responses:
+        '200':
+          description: Available rankings
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RankingCollection' }
+        '304': { $ref: '#/components/responses/NotModified' }
+        '405': { $ref: '#/components/responses/MethodNotAllowed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /v1/rankings/{rankingId}:
+    get:
+      operationId: getRanking
+      summary: Get one paginated ranking snapshot
+      parameters:
+        - $ref: '#/components/parameters/ProtocolVersion'
+        - $ref: '#/components/parameters/RequestPurpose'
+        - $ref: '#/components/parameters/RankingId'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Ranking page
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RankingPage' }
+        '304': { $ref: '#/components/responses/NotModified' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/RankingNotFound' }
         '405': { $ref: '#/components/responses/MethodNotAllowed' }
         '429': { $ref: '#/components/responses/RateLimited' }
         '500': { $ref: '#/components/responses/InternalError' }
@@ -218,6 +263,11 @@ components:
       in: path
       required: true
       schema: { $ref: '#/components/schemas/OpaqueId' }
+    RankingId:
+      name: rankingId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/OpaqueId' }
   headers:
     ETag:
       description: Entity tag for the selected representation.
@@ -232,6 +282,11 @@ components:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
     NotFound:
       description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    RankingNotFound:
+      description: Ranking not found
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
@@ -352,6 +407,53 @@ components:
       properties:
         id: { $ref: '#/components/schemas/OpaqueId' }
         name: { type: string, minLength: 1, maxLength: 200 }
+    RankingCollection:
+      type: object
+      additionalProperties: true
+      required: [items]
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items: { $ref: '#/components/schemas/Ranking' }
+    Ranking:
+      type: object
+      description: A named ranking scoped to the source serving the response.
+      additionalProperties: true
+      required: [id, title]
+      properties:
+        id: { $ref: '#/components/schemas/OpaqueId' }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: string, maxLength: 1000 }
+        period:
+          type: string
+          enum: [realtime, daily, weekly, monthly, all-time]
+        categoryId: { $ref: '#/components/schemas/OpaqueId' }
+    RankingPage:
+      type: object
+      additionalProperties: true
+      required: [ranking, snapshotId, items, page, pageSize, hasMore]
+      properties:
+        ranking: { $ref: '#/components/schemas/Ranking' }
+        snapshotId: { $ref: '#/components/schemas/OpaqueId' }
+        snapshotAt: { type: string, format: date-time }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/RankingEntry' }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+        total: { type: integer, minimum: 0 }
+        hasMore: { type: boolean }
+    RankingEntry:
+      type: object
+      additionalProperties: true
+      required: [rank, book]
+      properties:
+        rank: { type: integer, minimum: 1 }
+        previousRank: { type: integer, minimum: 1 }
+        score: { type: number }
+        scoreLabel: { type: string, maxLength: 100 }
+        book: { $ref: '#/components/schemas/Book' }
     Chapter:
       type: object
       additionalProperties: true
@@ -401,9 +503,10 @@ components:
               pattern: '^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$'
               description: >-
                 Standard ORSP codes: INVALID_PARAMETER, BOOK_NOT_FOUND,
-                CHAPTER_NOT_FOUND, ROUTE_NOT_FOUND, METHOD_NOT_ALLOWED,
-                RATE_LIMITED, INTERNAL_ERROR, UNAVAILABLE. Source-defined
-                codes must use the X_ prefix. Clients ignore unknown codes.
+                CHAPTER_NOT_FOUND, RANKING_NOT_FOUND, ROUTE_NOT_FOUND,
+                METHOD_NOT_ALLOWED, RATE_LIMITED, INTERNAL_ERROR, UNAVAILABLE.
+                Source-defined codes must use the X_ prefix. Clients ignore
+                unknown codes.
             message: { type: string, minLength: 1 }
             retryable: { type: boolean }
             requestId: { type: string, minLength: 1, maxLength: 200 }

@@ -35,6 +35,7 @@ python scripts/registry_tool.py validate
 python scripts/registry_tool.py build --check
 python scripts/registry_tool.py check-source path/to/source-entry.json
 python scripts/registry_tool.py check-source path/to/source-entry.json --profile discovery
+python scripts/registry_tool.py check-source path/to/source-entry.json --profile rankings
 ```
 
 这些工具只检查格式和网络安全边界，不认证内容权利。独立 Registry 运营者应采用至少与
