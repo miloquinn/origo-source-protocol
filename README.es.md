@@ -30,13 +30,15 @@ GET {apiBaseUrl}v1/books/{bookId}/chapters?page=1&pageSize=100
 GET {apiBaseUrl}v1/books/{bookId}/chapters/{chapterId}
 ```
 
-La versión 1.4 también define operaciones opcionales de descubrimiento,
-categorías y exploración:
+La versión 1.5 también define operaciones opcionales de descubrimiento,
+categorías, exploración y múltiples clasificaciones:
 
 ```text
 GET {apiBaseUrl}v1/discover
 GET {apiBaseUrl}v1/categories
 GET {apiBaseUrl}v1/browse?category={categoryId}&sort=latest&page=1&pageSize=20
+GET {apiBaseUrl}v1/rankings
+GET {apiBaseUrl}v1/rankings/{rankingId}?page=1&pageSize=20
 ```
 
 Consulta la [especificación](SPECIFICATION.md) y la definición
@@ -66,7 +68,7 @@ emulador de Android.
 
 ## Estado y uso responsable
 
-La versión `1.4` es un borrador candidato. El flujo básico de lectura ya
+La versión `1.5` es un borrador candidato. El flujo básico de lectura ya
 ha sido verificado, pero se aceptan propuestas sobre autenticación,
 sincronización, paginación y formatos de contenido antes de declarar una
 versión estable.

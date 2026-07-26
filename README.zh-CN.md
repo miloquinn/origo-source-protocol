@@ -42,7 +42,7 @@ GET /.well-known/open-reading-source.json
 ```json
 {
   "protocol": "open-reading-source",
-  "protocolVersion": "1.4",
+  "protocolVersion": "1.5",
   "id": "org.example.public-books",
   "name": "示例公共图书源",
   "description": "由 Example.org 维护的公共领域图书",
@@ -54,13 +54,13 @@ GET /.well-known/open-reading-source.json
   "languages": ["zh-CN"],
   "maxCatalogPageSize": 200,
   "capabilities": [
-    "search", "discover", "categories", "browse",
+    "search", "discover", "categories", "browse", "rankings",
     "detail", "catalog", "content"
   ]
 }
 ```
 
-协议 1.4 保留四类核心接口：
+协议 1.5 保留四类核心接口：
 
 ```text
 GET {apiBaseUrl}v1/search?q={query}&page=1&pageSize=20
@@ -69,17 +69,20 @@ GET {apiBaseUrl}v1/books/{bookId}/chapters?page=1&pageSize=100
 GET {apiBaseUrl}v1/books/{bookId}/chapters/{chapterId}
 ```
 
-支持内容发现的书源还可以声明三个可选标准能力：
+书源还可以声明发现与多榜单等可选标准能力：
 
 ```text
 GET {apiBaseUrl}v1/discover
 GET {apiBaseUrl}v1/categories
 GET {apiBaseUrl}v1/browse?category={categoryId}&sort=latest&page=1&pageSize=20
+GET {apiBaseUrl}v1/rankings
+GET {apiBaseUrl}v1/rankings/{rankingId}?page=1&pageSize=20
 ```
 
-这些相对路径必须基于发现文档中的 `apiBaseUrl` 解析。ORSP 1.4 Core Reading 书源必须
-实现全部四项核心能力；发现、分类和浏览按能力声明启用，旧的 1.0 书源无需修改也可以
-继续搜索和阅读。完整字段与错误处理要求请阅读
+这些相对路径必须基于发现文档中的 `apiBaseUrl` 解析。ORSP 1.5 Core Reading 书源必须
+实现全部四项核心能力；发现、分类、浏览和多榜单按能力声明启用，旧的 1.x 书源无需修改
+也可以继续搜索和阅读。榜单排名只在对应的书源、榜单 ID 和快照 ID 内有效。完整字段与
+错误处理要求请阅读
 [协议规范](SPECIFICATION.zh-CN.md)，接口模型可查看 [OpenAPI 3.1 文档](openapi.yaml)。
 
 客户端可以把多个书源聚合为默认“全部书源”发现页，并提供单书源筛选。聚合界面必须
@@ -128,6 +131,8 @@ HTML 正文应被视为不可信输入，客户端在渲染前应进行清理。
 ```text
 SPECIFICATION.md                规范性协议说明
 OEP-0001-discovery.md           历史 ORSP 1.1 发现能力提案与兼容性分析
+OEP-0003-registry-diagnostics.md Registry 诊断与配置检查候选提案
+OEP-0004-rankings.md            ORSP 1.5 多榜单能力提案与兼容性分析
 SPECIFICATION.zh-CN.md          简体中文协议翻译
 openapi.yaml                    OpenAPI 3.1 接口定义
 schemas/discovery.schema.json   发现文档 JSON Schema
@@ -135,6 +140,7 @@ examples/dart_server.dart       可运行的 Dart 参考书源
 examples/open-reading-source.json 发现文档示例
 tool/conformance_test.dart      端到端核心一致性测试
 tool/discovery_conformance_test.dart Discovery Profile 一致性测试
+tool/rankings_conformance_test.dart Rankings Profile 一致性测试
 GOVERNANCE.zh-CN.md             协议变更与发布治理
 ECOSYSTEM.zh-CN.md              适配器与联邦书源目录架构
 registry/                       非官方 Registry 参考格式与工具
@@ -142,7 +148,7 @@ registry/                       非官方 Registry 参考格式与工具
 
 ## 当前状态与兼容性
 
-协议版本 `1.4` 目前是候选草案。兼容性规则、机器可读契约、参考书源和核心一致性测试
+协议版本 `1.5` 目前是候选草案。兼容性规则、机器可读契约、参考书源和核心一致性测试
 会同步演进。在宣布稳定版本之前，欢迎独立阅读器和书源实现参与互操作验证。
 
 可以运行官方核心测试：
@@ -150,6 +156,7 @@ registry/                       非官方 Registry 参考格式与工具
 ```bash
 dart run tool/conformance_test.dart
 dart run tool/discovery_conformance_test.dart
+dart run tool/rankings_conformance_test.dart
 ```
 
 同一主版本内应保持向后兼容。新增可选字段通常可以继续使用 1.x；修改必填字段、接口

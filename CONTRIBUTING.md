@@ -50,9 +50,13 @@ JSON Schemas, examples, and conformance tests in the same pull request.
 
 ```bash
 dart format --output=none --set-exit-if-changed \
-  examples/dart_server.dart tool/conformance_test.dart
-dart analyze examples/dart_server.dart tool/conformance_test.dart
+  examples/dart_server.dart tool/conformance_test.dart \
+  tool/discovery_conformance_test.dart tool/rankings_conformance_test.dart
+dart analyze examples/dart_server.dart tool/conformance_test.dart \
+  tool/discovery_conformance_test.dart tool/rankings_conformance_test.dart
 dart run tool/conformance_test.dart
+dart run tool/discovery_conformance_test.dart
+dart run tool/rankings_conformance_test.dart
 python -m pip install jsonschema pyyaml openapi-spec-validator
 python scripts/validate_contracts.py
 python scripts/registry_tool.py validate

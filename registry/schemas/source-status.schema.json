@@ -9,7 +9,7 @@
     "schemaVersion": { "const": "1.0" },
     "id": { "type": "string", "minLength": 3, "maxLength": 200, "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$" },
     "checkedAt": { "type": "string", "format": "date-time" },
-    "profile": { "type": "string", "enum": ["core-reading", "discovery"] },
+    "profile": { "type": "string", "enum": ["core-reading", "discovery", "rankings"] },
     "status": { "type": "string", "enum": ["verified", "degraded", "offline", "unknown"] },
     "protocolVersion": { "type": "string", "pattern": "^1\\.[0-9]+$" },
     "stages": {

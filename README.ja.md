@@ -29,12 +29,14 @@ GET {apiBaseUrl}v1/books/{bookId}/chapters?page=1&pageSize=100
 GET {apiBaseUrl}v1/books/{bookId}/chapters/{chapterId}
 ```
 
-バージョン 1.4 では、任意のディスカバリー、カテゴリ、ブラウズ API も定義します。
+バージョン 1.5 では、任意のディスカバリー、カテゴリ、ブラウズ、複数ランキング API も定義します。
 
 ```text
 GET {apiBaseUrl}v1/discover
 GET {apiBaseUrl}v1/categories
 GET {apiBaseUrl}v1/browse?category={categoryId}&sort=latest&page=1&pageSize=20
+GET {apiBaseUrl}v1/rankings
+GET {apiBaseUrl}v1/rankings/{rankingId}?page=1&pageSize=20
 ```
 
 フィールドとエラー処理の詳細は、[仕様書](SPECIFICATION.md)および
@@ -63,7 +65,7 @@ PC では `http://127.0.0.1:8787`、Android エミュレーターでは
 
 ## ステータスと責任ある利用
 
-バージョン `1.4` は候補ドラフトです。基本的な読書フローは検証済みですが、安定版の
+バージョン `1.5` は候補ドラフトです。基本的な読書フローは検証済みですが、安定版の
 公開前に、認証、同期、ページング、コンテンツ形式についてのフィードバックを歓迎します。
 
 ORSP は、オリジナル、パブリックドメイン、または正規に許諾されたコンテンツを対象とします。
