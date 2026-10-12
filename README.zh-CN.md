@@ -180,3 +180,7 @@ ORSP 面向原创内容、公共领域内容以及已获得合法授权的内容
 同时说明兼容性、安全、隐私和版权影响，并更新相关规范、Schema 或示例。
 
 详细流程参见 [CONTRIBUTING.zh-CN.md](CONTRIBUTING.zh-CN.md)。本仓库采用 [MIT](LICENSE) 许可。
+
+## EPUB、评论与段评
+
+[OEP-0004](OEP-0004-publications-and-comments.md) / [中文合同](docs/publications-and-comments.zh-CN.md) 提供 EPUB 实验扩展和评论、段评草案，保留 ORSP 1.5 旧接口。[元创书源](examples/yuanchuang-source.json) 已提供公开章节与 EPUB 下载；未部署的评论能力不在发现文档中声明。

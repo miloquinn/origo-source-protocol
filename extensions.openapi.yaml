@@ -1,0 +1,371 @@
+openapi: 3.1.0
+info:
+  title: ORSP OEP-0004 extensions
+  version: 0.1.0
+  description: Experimental EPUB publications; draft comment contracts. Core ORSP
+    1.5 remains unchanged. Write bearer tokens must be issued for the specific source.
+servers:
+- url: https://creator.xxread.top/api/orsp
+paths:
+  /v1/books/{bookId}/publications:
+    parameters:
+    - $ref: '#/components/parameters/BookId'
+    get:
+      operationId: listPublications
+      description: Requires top.xxread:publications.
+      responses:
+        '200':
+          description: Immutable EPUB metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publications'
+        '404':
+          $ref: '#/components/responses/Error'
+  /v1/books/{bookId}/publications/{publicationId}:
+    parameters:
+    - $ref: '#/components/parameters/BookId'
+    - name: publicationId
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      operationId: downloadPublication
+      description: Yuanchuang download relation; other sources may expose another
+        href. Validate file size and SHA-256 before import.
+      responses:
+        '200':
+          description: Complete EPUB file
+          content:
+            application/epub+zip:
+              schema:
+                type: string
+                format: binary
+        '206':
+          description: Requested byte range
+          content:
+            application/epub+zip:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/Error'
+        '416':
+          $ref: '#/components/responses/Error'
+  /v1/books/{bookId}/comments:
+    parameters:
+    - $ref: '#/components/parameters/BookId'
+    get:
+      operationId: listComments
+      description: Draft. Requires top.xxread:comments. chapterId additionally requires
+        top.xxread:paragraph-comments.
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: cursor
+        in: query
+        schema:
+          type: string
+          maxLength: 2000
+      - name: chapterId
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Published comments only
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comments'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+    post:
+      operationId: createComment
+      description: Draft. Requires top.xxread:comment-write and source-issued authorization.
+        Moderated pending submission is outside this draft response contract.
+      security:
+      - sourceBearer: []
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentInput'
+      responses:
+        '201':
+          description: Published comment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '429':
+          $ref: '#/components/responses/Error'
+  /v1/books/{bookId}/comments/{commentId}:
+    parameters:
+    - $ref: '#/components/parameters/BookId'
+    - name: commentId
+      in: path
+      required: true
+      schema:
+        type: string
+    delete:
+      operationId: deleteComment
+      description: Draft; owner/moderator only, idempotent for the same authorized
+        actor.
+      security:
+      - sourceBearer: []
+      responses:
+        '204':
+          description: Removed
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+components:
+  securitySchemes:
+    sourceBearer:
+      type: http
+      scheme: bearer
+  parameters:
+    BookId:
+      name: bookId
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    Error:
+      description: Core ORSP error envelope; extension codes are prefixed X_.
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - error
+            properties:
+              error:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+                  retryable:
+                    type: boolean
+  schemas:
+    Id:
+      type: string
+      minLength: 1
+      maxLength: 200
+      pattern: ^[A-Za-z0-9._~-]+$
+    Hash:
+      type: string
+      pattern: ^[a-f0-9]{64}$
+    Publication:
+      type: object
+      additionalProperties: true
+      required:
+      - id
+      - href
+      - mediaType
+      - bytes
+      - sha256
+      properties:
+        id:
+          $ref: '#/components/schemas/Id'
+        href:
+          type: string
+          format: uri
+          pattern: ^https://[^/?#@]+/
+        mediaType:
+          const: application/epub+zip
+        bytes:
+          type: integer
+          minimum: 1
+        sha256:
+          $ref: '#/components/schemas/Hash'
+    Publications:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/Publication'
+    Quote:
+      type: object
+      required:
+      - exact
+      properties:
+        exact:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        prefix:
+          type: string
+          maxLength: 1000
+        suffix:
+          type: string
+          maxLength: 1000
+    TextSelector:
+      type: object
+      required:
+      - type
+      - start
+      - end
+      - quote
+      properties:
+        type:
+          const: TextPositionSelector
+        start:
+          type: integer
+          minimum: 0
+        end:
+          type: integer
+          minimum: 1
+        quote:
+          $ref: '#/components/schemas/Quote'
+    CfiSelector:
+      type: object
+      required:
+      - type
+      - publicationId
+      - resource
+      - cfi
+      properties:
+        type:
+          const: EpubCfiSelector
+        publicationId:
+          $ref: '#/components/schemas/Id'
+        resource:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: ^(?!/)(?!.*(?:^|/)\.\.(?:/|$))[^:#?\\]+$
+        cfi:
+          type: string
+          minLength: 10
+          maxLength: 4000
+          pattern: ^epubcfi\(.+\)$
+    Anchor:
+      type: object
+      required:
+      - chapterId
+      - contentVersion
+      - selector
+      properties:
+        chapterId:
+          $ref: '#/components/schemas/Id'
+        contentVersion:
+          $ref: '#/components/schemas/Hash'
+        selector:
+          oneOf:
+          - $ref: '#/components/schemas/TextSelector'
+          - $ref: '#/components/schemas/CfiSelector'
+    Comment:
+      type: object
+      required:
+      - id
+      - bookId
+      - author
+      - body
+      - createdAt
+      properties:
+        id:
+          $ref: '#/components/schemas/Id'
+        bookId:
+          $ref: '#/components/schemas/Id'
+        author:
+          type: object
+          additionalProperties: false
+          required:
+          - id
+          - displayName
+          properties:
+            id:
+              $ref: '#/components/schemas/Id'
+            displayName:
+              type: string
+              minLength: 1
+              maxLength: 100
+        body:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        createdAt:
+          type: string
+          format: date-time
+        replyTo:
+          $ref: '#/components/schemas/Id'
+        anchor:
+          $ref: '#/components/schemas/Anchor'
+    CommentInput:
+      type: object
+      additionalProperties: false
+      required:
+      - body
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        replyTo:
+          $ref: '#/components/schemas/Id'
+        anchor:
+          $ref: '#/components/schemas/Anchor'
+    Comments:
+      type: object
+      required:
+      - items
+      - hasMore
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/Comment'
+        hasMore:
+          type: boolean
+        nextCursor:
+          type: string
+          minLength: 1
+          maxLength: 2000
+      allOf:
+      - if:
+          properties:
+            hasMore:
+              const: true
+        then:
+          required:
+          - nextCursor
+        else:
+          not:
+            required:
+            - nextCursor

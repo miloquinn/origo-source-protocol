@@ -499,3 +499,7 @@ ORSP 不授予任何版权或访问权限。书源运营者必须只提供自己
 - 书源健康与目录协议；
 - 音频和其他媒体表示；
 - 批注、高亮和阅读进度同步。
+
+## EPUB 与社区扩展
+
+[OEP-0004](OEP-0004-publications-and-comments.md) 定义命名空间下的 EPUB 实验能力和评论、段评草案，不修改 1.5 核心一致性要求。详见[中文合同](docs/publications-and-comments.zh-CN.md)。

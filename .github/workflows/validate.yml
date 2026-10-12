@@ -28,6 +28,8 @@ jobs:
         run: dart analyze examples/dart_server.dart tool/conformance_test.dart
       - name: Validate schemas, examples, and OpenAPI
         run: python scripts/validate_contracts.py
+      - name: Validate EPUB and draft comment extensions
+        run: python scripts/validate_creator_extensions.py
       - name: Validate reference registry tooling
         run: |
           python scripts/registry_tool.py validate

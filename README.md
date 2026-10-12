@@ -146,3 +146,7 @@ compatibility analysis and updated examples or schemas.
 ## License
 
 [MIT](LICENSE)
+
+## EPUB and community extensions
+
+[OEP-0004](OEP-0004-publications-and-comments.md) adds experimental immutable EPUB downloads and draft work/paragraph comment contracts while preserving ORSP 1.5 core. [Yuanchuang manifest](examples/yuanchuang-source.json) is a working first-party source example. Comment capabilities are not deployed. Run `scripts/validate_creator_extensions.py` alongside existing validation.

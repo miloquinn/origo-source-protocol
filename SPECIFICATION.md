@@ -590,3 +590,7 @@ minor version, major version, or companion specification:
 - source health and registry protocols;
 - audio and other media representations;
 - annotations, highlights, and reading-progress synchronization.
+
+## Experimental publications and draft comments
+
+[OEP-0004](OEP-0004-publications-and-comments.md) defines namespaced optional publication and comment profiles outside the stable core. These profiles do not change ORSP 1.5 conformance or require existing readers to implement comment authentication.

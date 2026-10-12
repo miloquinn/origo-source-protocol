@@ -1,0 +1,282 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/miloquinn/origo-source-protocol/schemas/creator-extensions.schema.json",
+  "title": "OEP-0004 experimental publications and draft comments",
+  "$defs": {
+    "Id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9._~-]+$"
+    },
+    "Hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "Publication": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "id",
+        "href",
+        "mediaType",
+        "bytes",
+        "sha256"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "href": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://[^/?#@]+/"
+        },
+        "mediaType": {
+          "const": "application/epub+zip"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/Hash"
+        }
+      }
+    },
+    "Publications": {
+      "type": "object",
+      "required": [
+        "items"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/Publication"
+          }
+        }
+      }
+    },
+    "Quote": {
+      "type": "object",
+      "required": [
+        "exact"
+      ],
+      "properties": {
+        "exact": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10000
+        },
+        "prefix": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "suffix": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      }
+    },
+    "TextSelector": {
+      "type": "object",
+      "required": [
+        "type",
+        "start",
+        "end",
+        "quote"
+      ],
+      "properties": {
+        "type": {
+          "const": "TextPositionSelector"
+        },
+        "start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "quote": {
+          "$ref": "#/$defs/Quote"
+        }
+      }
+    },
+    "CfiSelector": {
+      "type": "object",
+      "required": [
+        "type",
+        "publicationId",
+        "resource",
+        "cfi"
+      ],
+      "properties": {
+        "type": {
+          "const": "EpubCfiSelector"
+        },
+        "publicationId": {
+          "$ref": "#/$defs/Id"
+        },
+        "resource": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^:#?\\\\]+$"
+        },
+        "cfi": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 4000,
+          "pattern": "^epubcfi\\(.+\\)$"
+        }
+      }
+    },
+    "Anchor": {
+      "type": "object",
+      "required": [
+        "chapterId",
+        "contentVersion",
+        "selector"
+      ],
+      "properties": {
+        "chapterId": {
+          "$ref": "#/$defs/Id"
+        },
+        "contentVersion": {
+          "$ref": "#/$defs/Hash"
+        },
+        "selector": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/TextSelector"
+            },
+            {
+              "$ref": "#/$defs/CfiSelector"
+            }
+          ]
+        }
+      }
+    },
+    "Comment": {
+      "type": "object",
+      "required": [
+        "id",
+        "bookId",
+        "author",
+        "body",
+        "createdAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "bookId": {
+          "$ref": "#/$defs/Id"
+        },
+        "author": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "displayName"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/Id"
+            },
+            "displayName": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          }
+        },
+        "body": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "replyTo": {
+          "$ref": "#/$defs/Id"
+        },
+        "anchor": {
+          "$ref": "#/$defs/Anchor"
+        }
+      }
+    },
+    "CommentInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "body"
+      ],
+      "properties": {
+        "body": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "replyTo": {
+          "$ref": "#/$defs/Id"
+        },
+        "anchor": {
+          "$ref": "#/$defs/Anchor"
+        }
+      }
+    },
+    "Comments": {
+      "type": "object",
+      "required": [
+        "items",
+        "hasMore"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/Comment"
+          }
+        },
+        "hasMore": {
+          "type": "boolean"
+        },
+        "nextCursor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "hasMore": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "nextCursor"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "nextCursor"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}
