@@ -17,12 +17,14 @@ boundary. Do not replace their stack, accounts, storage or repository layout.
 For a new source, use the bundled zero-dependency Python starter when suitable:
 
 ```bash
-python scripts/create_source.py ./my-source --id org.example.library --name "My library"
+python "/path/to/origo-source-builder/scripts/create_source.py" ./my-source --id org.example.library --name "My library"
 cd my-source
 python server.py --port 8787
 ```
 
-Resolve these paths relative to this Skill folder. In the generated project,
+Run from the user’s chosen code workspace and replace /path/to/origo-source-builder
+with this Skill’s actual path. Keep generated projects outside the installed Skill
+and protocol repository. In the generated project,
 `library.json` holds original sample content; replace it with the user's books
 without changing already-published book/chapter IDs. The starter implements
 core reading, browse and chapter updates. Other profiles require implementation
