@@ -13,9 +13,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: '3.12.2'
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.12'
       - name: Install contract validators
         run: >-
           python -m pip install --disable-pip-version-check

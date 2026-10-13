@@ -43,6 +43,9 @@
 
 ## 本地检查
 
+参考验证工具链为 Dart 3.12.2 和 Python 3.12；CI 固定这些版本，避免不同机器的
+格式化规则变化导致同一提交出现不同验收结果。
+
 ```bash
 dart format --output=none --set-exit-if-changed \
   examples/dart_server.dart tool/conformance_test.dart

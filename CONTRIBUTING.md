@@ -48,6 +48,9 @@ JSON Schemas, examples, and conformance tests in the same pull request.
 
 ## Local checks
 
+The conformance reference toolchains are Dart 3.12.2 and Python 3.12. CI pins
+these versions so formatter drift does not change acceptance between machines.
+
 ```bash
 dart format --output=none --set-exit-if-changed \
   examples/dart_server.dart tool/conformance_test.dart
