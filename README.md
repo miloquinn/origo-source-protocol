@@ -36,30 +36,38 @@ GET {apiBaseUrl}v1/books/{bookId}/chapters?page=1&pageSize=100
 GET {apiBaseUrl}v1/books/{bookId}/chapters/{chapterId}
 ```
 
-ORSP 1.4 sources may additionally advertise a standard discovery profile:
+ORSP 1.6 sources may additionally advertise standard discovery and rankings
+profiles:
 
 ```text
 GET {apiBaseUrl}v1/discover
 GET {apiBaseUrl}v1/categories
 GET {apiBaseUrl}v1/browse?category={categoryId}&sort=latest&page=1&pageSize=20
+GET {apiBaseUrl}v1/rankings
+GET {apiBaseUrl}v1/rankings/{rankingId}?page=1&pageSize=20
 ```
 
 These endpoint relations are resolved against the discovered `apiBaseUrl`.
-ORSP 1.4 Core Reading sources implement all four core capabilities. Discovery,
-categories, and browsing are optional and capability-gated, so existing ORSP
-1.0 sources remain compatible.
+ORSP 1.6 Core Reading sources implement all four core capabilities. Discovery,
+categories, browsing, and multiple rankings are optional and capability-gated,
+so existing ORSP 1.x sources remain compatible.
 
 Readers may aggregate several sources into an all-sources discovery view and
 offer a single-source filter. Aggregate interfaces retain source attribution,
 keep IDs source-scoped, preserve each source's internal ranking, and use a
 source-balanced merge for latest or popular feeds.
 
+The optional `rankings` capability exposes multiple named, paginated ranking
+snapshots such as weekly popularity and monthly new releases. Rank values stay
+scoped to their source, ranking ID, and snapshot; readers do not treat metrics
+from independent sources as one authoritative global chart.
+
 Example discovery document:
 
 ```json
 {
   "protocol": "open-reading-source",
-  "protocolVersion": "1.4",
+  "protocolVersion": "1.6",
   "id": "org.example.public-books",
   "name": "Example Public Books",
   "description": "Public-domain books maintained by Example.org",
@@ -71,7 +79,7 @@ Example discovery document:
   "languages": ["en"],
   "maxCatalogPageSize": 200,
   "capabilities": [
-    "search", "discover", "categories", "browse",
+    "search", "discover", "categories", "browse", "rankings",
     "detail", "catalog", "content"
   ]
 }
@@ -94,6 +102,7 @@ ORSP-compatible reader. Android emulators should use `http://10.0.2.2:8787`.
 ```text
 SPECIFICATION.md              Normative protocol specification
 OEP-0001-discovery.md         Historical ORSP 1.1 discovery proposal and compatibility analysis
+OEP-0007-rankings.md          ORSP 1.6 multiple-ranking proposal and compatibility analysis
 openapi.yaml                  OpenAPI 3.1 API description
 schemas/discovery.schema.json Discovery-document JSON Schema
 examples/dart_server.dart     Runnable reference source
@@ -106,7 +115,7 @@ registry/                     Non-official registry reference format and tools
 
 ## Status
 
-Protocol version `1.4` is a candidate draft. Its compatibility rules,
+Protocol version `1.6` is a candidate draft. Its compatibility rules,
 machine-readable contracts, reference source, and core conformance tests are
 now developed together. Independent reader and source implementations are
 welcome before the specification is declared stable.
@@ -149,8 +158,31 @@ compatibility analysis and updated examples or schemas.
 
 ## EPUB and community extensions
 
-[OEP-0004](OEP-0004-publications-and-comments.md) adds experimental immutable EPUB downloads and draft work/paragraph comment contracts while preserving ORSP 1.5 core. [Yuanchuang manifest](examples/yuanchuang-source.json) is a working first-party source example. Comment capabilities are not deployed. Run `scripts/validate_creator_extensions.py` alongside existing validation.
+[OEP-0004](OEP-0004-publications-and-comments.md) adds experimental immutable EPUB downloads and draft work/paragraph comment contracts while preserving ORSP 1.6 core. [Yuanchuang manifest](examples/yuanchuang-source.json) is a working first-party source example. Comment capabilities are not deployed. Run `scripts/validate_creator_extensions.py` alongside existing validation.
 
 ## Chapter updates
 
 [OEP-0005](OEP-0005-chapter-updates.md) adds experimental chapter-update state, catalog snapshot pinning and per-chapter text versions. Existing readers keep the core catalog path. Run `python scripts/validate_chapter_updates.py` for live append/correction/pagination checks.
+
+## Complete reading bundle
+
+The 1.6 candidate brings together text/illustrated chapters, chapter updates,
+EPUB publications, image sequences, recorded audio and multiple rankings.
+Optional profiles preserve existing 1.x endpoint and identity semantics.
+See [OEP-0006](OEP-0006-media-reading.md), [OEP-0007 rankings](OEP-0007-rankings.md),
+the [source upgrade guide](docs/source-upgrade-guide.zh-CN.md),
+[Schema index](docs/Schema.md) and [API index](docs/api.md).
+OEP-0007 avoids a collision with the existing registry-diagnostics OEP-0003.
+
+```bash
+python examples/reading_profiles_server.py
+python scripts/validate_reading_profiles.py
+python scripts/test_probe_source.py
+python scripts/probe_source.py https://books.example.org/.well-known/open-reading-source.json
+```
+
+The reference uses original text, generated PNG/WAV assets and a deterministic
+EPUB. Its real HTTP tests cover media expiry, ranges, body corrections and
+ranking snapshots. The bounded, read-only probe reports structure without
+retaining chapter bodies. Sampled compatibility does not prove every asset or
+physical-device playback. Protocol updates do not deploy third-party sources.

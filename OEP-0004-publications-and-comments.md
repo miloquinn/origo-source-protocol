@@ -1,7 +1,7 @@
 # OEP-0004: EPUB publications, comments and paragraph anchors
 
 Status: **Experimental** for publications; **Draft** for comments  
-Target: optional extensions to **ORSP 1.5**; core endpoint relations remain unchanged.
+Target: optional extensions to **ORSP 1.x**; core endpoint relations remain unchanged.
 
 [简体中文合同](docs/publications-and-comments.zh-CN.md) ·
 [JSON Schema](schemas/creator-extensions.schema.json) ·
@@ -25,14 +25,14 @@ chapter response with ZIP bytes or change the meaning of `contentType`.
 Clients MUST call optional relations only when the source declares their
 capability. A source MUST advertise implemented behavior only. Yuanchuang
 currently advertises publications, not comments, paragraph comments or writes.
-The core remains 1.5, including existing candidate rankings work.
+The current core candidate is 1.6; existing ORSP 1.x endpoint meanings remain unchanged.
 
 ## Publications (experimental)
 
 `GET v1/books/{bookId}/publications` returns `{ "items": [Publication] }`.
 Book detail MAY also include the same `publications` array. Empty means this
 book has no complete EPUB representation. A Publication contains a stable
-opaque `id`, absolute HTTPS `href`, `mediaType: application/epub+zip`, positive
+opaque `id`, absolute HTTP(S) `href`, `mediaType: application/epub+zip`, positive
 `bytes`, and lowercase 64-character `sha256`. The hash and byte length describe
 the complete downloaded file, not the JSON metadata or decompressed resources.
 Clients MUST bound download size, verify both length and hash before importing,
@@ -41,7 +41,8 @@ ID; a publication ID MUST NOT be reused for different bytes.
 
 Yuanchuang uses `GET v1/books/{bookId}/publications/{publicationId}` for the
 binary representation. Other sources MAY use another absolute `href`.
-Download responses use the EPUB MIME type and SHOULD provide Content-Length,
+Production downloads SHOULD use HTTPS. Local development and existing public
+HTTP sources follow the core HTTP(S) transport rules. Download responses use the EPUB MIME type and SHOULD provide Content-Length,
 ETag, Content-Disposition and HTTP byte-range support. Sources retain core
 chapter access: text projection is useful to existing readers, but MUST NOT be
 presented as a lossless EPUB rendering. Unsupported non-text or oversized

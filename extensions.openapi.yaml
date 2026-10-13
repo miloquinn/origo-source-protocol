@@ -201,7 +201,7 @@ components:
         href:
           type: string
           format: uri
-          pattern: ^https://[^/?#@]+/
+          pattern: ^https?://[^/?#@]+/
         mediaType:
           const: application/epub+zip
         bytes:

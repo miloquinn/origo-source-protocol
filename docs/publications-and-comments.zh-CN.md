@@ -1,6 +1,6 @@
 # EPUB、评论与段评扩展合同
 
-当前核心版本 **ORSP 1.5**；[OEP-0004](../OEP-0004-publications-and-comments.md)
+当前核心候选版本 **ORSP 1.6**；[OEP-0004](../OEP-0004-publications-and-comments.md)
 是本扩展的英文合同。EPUB 为实验能力；评论、段评和写入为草案。
 不得把未实现的能力写进发现文档，也不破坏现有搜索、详情、目录、正文接口。
 
@@ -21,7 +21,7 @@
 | `top.xxread:paragraph-comments` | 评论筛选 `chapterId`、canonical anchor | 草案，依赖 comments |
 | `top.xxread:comment-write` | `POST .../comments`、`DELETE .../comments/{id}` | 草案，依赖 comments |
 
-EPUB 元数据包含不复用的出版文件 ID、HTTPS 下载地址、MIME、字节数与 SHA-256。
+EPUB 元数据包含不复用的出版文件 ID、HTTP(S) 下载地址（生产建议 HTTPS）、MIME、字节数与 SHA-256。
 客户端完成大小限制和完整性校验后交给已有 EPUB 阅读器，保留原排版。
 不能把 EPUB ZIP 当成章节 JSON，不能把纯文本投影冒充完整 EPUB 阅读体验。
 

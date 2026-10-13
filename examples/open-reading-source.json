@@ -1,7 +1,11 @@
 {
   "protocol": "open-reading-source",
-  "protocolVersion": "1.4",
-  "supportedVersions": ["1.4"],
+  "protocolVersion": "1.6",
+  "supportedVersions": [
+    "1.4",
+    "1.5",
+    "1.6"
+  ],
   "id": "org.example.public-books",
   "name": "Example Public Books",
   "description": "A minimal Open Reading compatible source",
@@ -12,15 +16,22 @@
   "contactUrl": "https://books.example.org/rights",
   "contentLicense": "Public Domain",
   "rightsStatement": "This source serves public-domain books verified by its operator.",
-  "languages": ["zh-CN", "en"],
+  "languages": [
+    "zh-CN",
+    "en"
+  ],
   "maxCatalogPageSize": 500,
   "capabilities": [
     "search",
     "discover",
     "categories",
     "browse",
+    "rankings",
     "detail",
     "catalog",
     "content"
+  ],
+  "contentTypes": [
+    "text/plain"
   ]
 }

@@ -41,3 +41,7 @@ python scripts/registry_tool.py check-source path/to/source-entry.json --profile
 [POLICY.zh-CN.md](POLICY.zh-CN.md) 同等严格的审核与下架政策，并提供自己的公开举报渠道。
 
 官方项目的书源分发边界见 [SOURCE_POLICY.zh-CN.md](../SOURCE_POLICY.zh-CN.md)。
+
+1.6 候选的核心诊断使用共享章节 Schema，可检查声明了对应能力的图片/录音 JSON 描述，
+会严格报告缺少 title 等字段。诊断不下载媒体，不验证播放；完整媒体验收和允许 HTTP 的
+读取采样分别见[完整阅读指南](../docs/source-upgrade-guide.zh-CN.md)。本目录网络策略仍为 HTTPS。

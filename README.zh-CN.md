@@ -42,7 +42,7 @@ GET /.well-known/open-reading-source.json
 ```json
 {
   "protocol": "open-reading-source",
-  "protocolVersion": "1.4",
+  "protocolVersion": "1.6",
   "id": "org.example.public-books",
   "name": "示例公共图书源",
   "description": "由 Example.org 维护的公共领域图书",
@@ -54,13 +54,13 @@ GET /.well-known/open-reading-source.json
   "languages": ["zh-CN"],
   "maxCatalogPageSize": 200,
   "capabilities": [
-    "search", "discover", "categories", "browse",
+    "search", "discover", "categories", "browse", "rankings",
     "detail", "catalog", "content"
   ]
 }
 ```
 
-协议 1.4 保留四类核心接口：
+协议 1.6 保留四类核心接口：
 
 ```text
 GET {apiBaseUrl}v1/search?q={query}&page=1&pageSize=20
@@ -69,17 +69,20 @@ GET {apiBaseUrl}v1/books/{bookId}/chapters?page=1&pageSize=100
 GET {apiBaseUrl}v1/books/{bookId}/chapters/{chapterId}
 ```
 
-支持内容发现的书源还可以声明三个可选标准能力：
+书源还可以声明发现与多榜单等可选标准能力：
 
 ```text
 GET {apiBaseUrl}v1/discover
 GET {apiBaseUrl}v1/categories
 GET {apiBaseUrl}v1/browse?category={categoryId}&sort=latest&page=1&pageSize=20
+GET {apiBaseUrl}v1/rankings
+GET {apiBaseUrl}v1/rankings/{rankingId}?page=1&pageSize=20
 ```
 
-这些相对路径必须基于发现文档中的 `apiBaseUrl` 解析。ORSP 1.4 Core Reading 书源必须
-实现全部四项核心能力；发现、分类和浏览按能力声明启用，旧的 1.0 书源无需修改也可以
-继续搜索和阅读。完整字段与错误处理要求请阅读
+这些相对路径必须基于发现文档中的 `apiBaseUrl` 解析。ORSP 1.6 Core Reading 书源必须
+实现全部四项核心能力；发现、分类、浏览和多榜单按能力声明启用，旧的 1.x 书源无需修改
+也可以继续搜索和阅读。榜单排名只在对应的书源、榜单 ID 和快照 ID 内有效。完整字段与
+错误处理要求请阅读
 [协议规范](SPECIFICATION.zh-CN.md)，接口模型可查看 [OpenAPI 3.1 文档](openapi.yaml)。
 
 客户端可以把多个书源聚合为默认“全部书源”发现页，并提供单书源筛选。聚合界面必须
@@ -128,6 +131,7 @@ HTML 正文应被视为不可信输入，客户端在渲染前应进行清理。
 ```text
 SPECIFICATION.md                规范性协议说明
 OEP-0001-discovery.md           历史 ORSP 1.1 发现能力提案与兼容性分析
+OEP-0007-rankings.md            ORSP 1.6 多榜单能力提案与兼容性分析
 SPECIFICATION.zh-CN.md          简体中文协议翻译
 openapi.yaml                    OpenAPI 3.1 接口定义
 schemas/discovery.schema.json   发现文档 JSON Schema
@@ -142,7 +146,7 @@ registry/                       非官方 Registry 参考格式与工具
 
 ## 当前状态与兼容性
 
-协议版本 `1.4` 目前是候选草案。兼容性规则、机器可读契约、参考书源和核心一致性测试
+协议版本 `1.6` 目前是候选草案。兼容性规则、机器可读契约、参考书源和核心一致性测试
 会同步演进。在宣布稳定版本之前，欢迎独立阅读器和书源实现参与互操作验证。
 
 可以运行官方核心测试：
@@ -183,8 +187,29 @@ ORSP 面向原创内容、公共领域内容以及已获得合法授权的内容
 
 ## EPUB、评论与段评
 
-[OEP-0004](OEP-0004-publications-and-comments.md) / [中文合同](docs/publications-and-comments.zh-CN.md) 提供 EPUB 实验扩展和评论、段评草案，保留 ORSP 1.5 旧接口。[元创书源](examples/yuanchuang-source.json) 已提供公开章节与 EPUB 下载；未部署的评论能力不在发现文档中声明。
+[OEP-0004](OEP-0004-publications-and-comments.md) / [中文合同](docs/publications-and-comments.zh-CN.md) 提供 EPUB 实验扩展和评论、段评草案，保留 ORSP 1.6 旧接口。[元创书源](examples/yuanchuang-source.json) 已提供公开章节与 EPUB 下载；未部署的评论能力不在发现文档中声明。
 
 ## 章节更新
 
 [OEP-0005](OEP-0005-chapter-updates.md) / [中文合同](docs/chapter-updates.zh-CN.md) 支持新增章节和正文修订，目录版本固定分页，保留旧接口。`python scripts/validate_chapter_updates.py` 验证真实 HTTP 追加、修订、重排、删除与版本冲突。
+
+## 完整阅读能力与升级
+
+1.6 候选整合文字/图文、章节更新、EPUB、图片序列、录音听书和多榜单。新增能力按需声明，
+旧 1.x 接口与源/书籍/章节 ID 保持兼容。媒体实验配置见 [OEP-0006](OEP-0006-media-reading.md)，
+多榜单提案使用 [OEP-0007](OEP-0007-rankings.md)，避免与已有注册表诊断 OEP-0003 重号。
+
+[书源升级指南](docs/source-upgrade-guide.zh-CN.md) 给出字段、缓存、过期地址刷新、
+客户端接入边界与测试步骤。[Schema 索引](docs/Schema.md) 和 [API 索引](docs/api.md)
+指向对应机器契约。完整原创参考源运行：
+
+```bash
+python examples/reading_profiles_server.py
+python scripts/validate_reading_profiles.py
+python scripts/test_probe_source.py
+python scripts/probe_source.py https://books.example.org/.well-known/open-reading-source.json
+```
+
+检查工具只读取并输出结构诊断，不保存书籍正文；采样通过不代表所有作品与客户端播放均已验收。
+用户提供的书源仍声明 1.1，升级需由源作者部署；[本轮检查](docs/source-audit-2026-10-13.md)
+已记录核心可访问与缺少正文 title 的具体问题。

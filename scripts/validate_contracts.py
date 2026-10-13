@@ -29,6 +29,12 @@ def main() -> None:
     validator = Draft202012Validator(schema, format_checker=FormatChecker())
     validator.validate(discovery)
 
+    legacy_optional = copy.deepcopy(discovery)
+    legacy_optional["protocolVersion"] = "1.4"
+    legacy_optional["supportedVersions"] = ["1.4"]
+    legacy_optional["capabilities"].remove("rankings")
+    validator.validate(legacy_optional)
+
     extension_fixture = copy.deepcopy(discovery)
     extension_fixture["capabilities"].append("org.example:audio")
     validator.validate(extension_fixture)

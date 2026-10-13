@@ -32,6 +32,10 @@ jobs:
         run: python scripts/validate_creator_extensions.py
       - name: Validate chapter update contracts and HTTP refresh
         run: python scripts/validate_chapter_updates.py
+      - name: Validate complete reading profiles and media delivery
+        run: python scripts/validate_reading_profiles.py
+      - name: Validate read-only source diagnostics
+        run: python scripts/test_probe_source.py
       - name: Validate reference registry tooling
         run: |
           python scripts/registry_tool.py validate
@@ -39,3 +43,5 @@ jobs:
           python scripts/test_registry_tool.py
       - name: Run core conformance tests
         run: dart run tool/conformance_test.dart
+      - name: Run discovery profile conformance tests
+        run: dart run tool/discovery_conformance_test.dart

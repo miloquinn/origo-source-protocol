@@ -19,6 +19,8 @@ from urllib.parse import quote, urlencode, urljoin, urlsplit
 from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource
 
+from reading_contracts import Contracts, media_issues, strict_json
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES_DIR = ROOT / "registry" / "sources"
@@ -51,8 +53,8 @@ class HttpResult:
 
     def json(self) -> Any:
         try:
-            return json.loads(self.body.decode("utf-8"))
-        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            return strict_json(self.body.decode("utf-8"))
+        except (UnicodeDecodeError, ValueError) as error:
             raise RegistryError(f"{self.url} did not return valid UTF-8 JSON") from error
 
 
@@ -268,7 +270,7 @@ def fetch(url: str) -> HttpResult:
                         "Accept": "application/json",
                         "Accept-Encoding": "identity",
                         "User-Agent": "ORSP-Registry-Validator/1.0",
-                        "X-Open-Reading-Protocol": "1.4",
+                        "X-Open-Reading-Protocol": "1.6",
                     },
                 )
                 response = connection.getresponse()
@@ -339,6 +341,7 @@ def require_id(value: Any, label: str) -> str:
 
 
 def check_source(path: Path, profile: str = "core-reading") -> dict[str, Any]:
+    contracts = Contracts()
     validate_manifest_file(path)
     entry_validator = json_validator(SOURCE_SCHEMA_PATH)
     entry = load_json(path)
@@ -454,10 +457,10 @@ def check_source(path: Path, profile: str = "core-reading") -> dict[str, Any]:
     stages["content"] = {"status": "ok", "latencyMs": result.elapsed_ms}
     if content.get("bookId") != book_id or content.get("chapterId") != chapter_id:
         raise RegistryError("Chapter content IDs do not match the requested resource")
-    if content.get("contentType") not in {"text/plain", "text/markdown", "text/html"}:
-        raise RegistryError("Chapter contentType is not supported by ORSP 1.4")
-    if not isinstance(content.get("content"), str):
-        raise RegistryError("Chapter content must be a string")
+    contract_errors = contracts.issues("core", "ChapterContent", content)
+    contract_errors.extend(media_issues(discovery, content))
+    if contract_errors:
+        raise RegistryError("Invalid chapter representation:\n- " + "\n- ".join(contract_errors))
 
     return diagnostic_report(entry["id"], profile, discovery["protocolVersion"], stages, warnings)
 

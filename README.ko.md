@@ -28,12 +28,14 @@ GET {apiBaseUrl}v1/books/{bookId}/chapters?page=1&pageSize=100
 GET {apiBaseUrl}v1/books/{bookId}/chapters/{chapterId}
 ```
 
-버전 1.4은 선택적 탐색, 카테고리 및 둘러보기 엔드포인트도 정의합니다.
+버전 1.6는 선택적 탐색, 카테고리, 둘러보기 및 다중 순위 엔드포인트도 정의합니다.
 
 ```text
 GET {apiBaseUrl}v1/discover
 GET {apiBaseUrl}v1/categories
 GET {apiBaseUrl}v1/browse?category={categoryId}&sort=latest&page=1&pageSize=20
+GET {apiBaseUrl}v1/rankings
+GET {apiBaseUrl}v1/rankings/{rankingId}?page=1&pageSize=20
 ```
 
 필드와 오류 처리에 대한 자세한 내용은 [프로토콜 명세](SPECIFICATION.md)와
@@ -62,7 +64,7 @@ PC에서는 `http://127.0.0.1:8787`, Android 에뮬레이터에서는
 
 ## 상태 및 책임 있는 사용
 
-프로토콜 `1.4`은 후보 초안입니다. 핵심 읽기 흐름은 검증되었지만 안정 버전 발표 전까지
+프로토콜 `1.6`는 후보 초안입니다. 핵심 읽기 흐름은 검증되었지만 안정 버전 발표 전까지
 인증, 동기화, 페이지 처리 및 콘텐츠 형식에 대한 의견을 환영합니다.
 
 ORSP는 창작물, 퍼블릭 도메인 및 정식 허가를 받은 콘텐츠를 위한 것입니다. 접근 제어를
@@ -70,3 +72,5 @@ ORSP는 창작물, 퍼블릭 도메인 및 정식 허가를 받은 콘텐츠를 
 
 기여 방법은 [CONTRIBUTING.md](CONTRIBUTING.md)를 참고하세요. 이 저장소는
 [MIT](LICENSE) 라이선스를 사용합니다.
+
+[ORSP 1.6 reading profiles](OEP-0006-media-reading.md) · [Upgrade guide](docs/source-upgrade-guide.zh-CN.md) · [Reference validation](scripts/validate_reading_profiles.py)

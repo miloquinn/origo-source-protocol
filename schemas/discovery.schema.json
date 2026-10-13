@@ -101,10 +101,26 @@
       "maxItems": 64,
       "uniqueItems": true,
       "allOf": [
-        { "contains": { "const": "search" } },
-        { "contains": { "const": "detail" } },
-        { "contains": { "const": "catalog" } },
-        { "contains": { "const": "content" } }
+        {
+          "contains": {
+            "const": "search"
+          }
+        },
+        {
+          "contains": {
+            "const": "detail"
+          }
+        },
+        {
+          "contains": {
+            "const": "catalog"
+          }
+        },
+        {
+          "contains": {
+            "const": "content"
+          }
+        }
       ],
       "items": {
         "anyOf": [
@@ -114,6 +130,7 @@
               "discover",
               "categories",
               "browse",
+              "rankings",
               "detail",
               "catalog",
               "content"
@@ -125,19 +142,142 @@
           }
         ]
       }
+    },
+    "contentTypes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 100,
+        "pattern": "^[a-z0-9.+-]+/[a-z0-9.+-]+$",
+        "not": {
+          "const": "application/epub+zip"
+        }
+      }
     }
   },
   "allOf": [
     {
       "if": {
         "properties": {
-          "capabilities": { "contains": { "const": "categories" } }
+          "capabilities": {
+            "contains": {
+              "const": "categories"
+            }
+          }
         },
-        "required": ["capabilities"]
+        "required": [
+          "capabilities"
+        ]
       },
       "then": {
         "properties": {
-          "capabilities": { "contains": { "const": "browse" } }
+          "capabilities": {
+            "contains": {
+              "const": "browse"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "top.xxread:image-sequence"
+            }
+          }
+        },
+        "required": [
+          "capabilities"
+        ]
+      },
+      "then": {
+        "required": [
+          "contentTypes"
+        ],
+        "properties": {
+          "contentTypes": {
+            "contains": {
+              "const": "image/sequence"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "top.xxread:remote-audio"
+            }
+          }
+        },
+        "required": [
+          "capabilities"
+        ]
+      },
+      "then": {
+        "required": [
+          "contentTypes"
+        ],
+        "properties": {
+          "contentTypes": {
+            "contains": {
+              "const": "audio/uri"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "contentTypes"
+        ],
+        "properties": {
+          "contentTypes": {
+            "contains": {
+              "const": "image/sequence"
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "top.xxread:image-sequence"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "contentTypes"
+        ],
+        "properties": {
+          "contentTypes": {
+            "contains": {
+              "const": "audio/uri"
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "capabilities": {
+            "contains": {
+              "const": "top.xxread:remote-audio"
+            }
+          }
         }
       }
     }

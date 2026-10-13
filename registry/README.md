@@ -52,3 +52,9 @@ public reporting channel.
 
 See [SOURCE_POLICY.md](../SOURCE_POLICY.md) for the official project's source
 distribution boundary.
+
+The 1.6 candidate core diagnostic uses the shared chapter schemas, including
+explicitly advertised image/audio descriptors and required title validation.
+It does not download or play media. See the [reading guide](../docs/source-upgrade-guide.zh-CN.md)
+for full profile acceptance and the separate read-only HTTP source probe.
+Registry targets still require HTTPS.

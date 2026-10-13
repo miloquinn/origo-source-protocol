@@ -55,6 +55,11 @@ dart analyze examples/dart_server.dart tool/conformance_test.dart
 dart run tool/conformance_test.dart
 python -m pip install jsonschema pyyaml openapi-spec-validator
 python scripts/validate_contracts.py
+python scripts/validate_creator_extensions.py
+python scripts/validate_chapter_updates.py
+python scripts/validate_reading_profiles.py
+python scripts/test_probe_source.py
+dart run tool/discovery_conformance_test.dart
 python scripts/registry_tool.py validate
 python scripts/registry_tool.py build --check
 python scripts/test_registry_tool.py

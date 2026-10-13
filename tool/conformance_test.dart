@@ -28,16 +28,25 @@ Future<void> main() async {
       'discovery uses application/json',
     );
     check(
-      discovery.headers.value('x-open-reading-protocol') == '1.4',
+      discovery.headers.value('x-open-reading-protocol') == '1.6',
       'source advertises its protocol version header',
     );
     final discoveryJson = discovery.json as Map<String, dynamic>;
     check(discoveryJson['protocol'] == 'open-reading-source', 'protocol token');
-    check(discoveryJson['protocolVersion'] == '1.4', 'protocol version');
+    check(discoveryJson['protocolVersion'] == '1.6', 'protocol version');
     final capabilities = (discoveryJson['capabilities'] as List).toSet();
     check(
-      capabilities.containsAll(['search', 'detail', 'catalog', 'content']),
-      'core reading capabilities are advertised',
+      capabilities.containsAll([
+        'search',
+        'discover',
+        'categories',
+        'browse',
+        'rankings',
+        'detail',
+        'catalog',
+        'content',
+      ]),
+      'core and discovery capabilities are advertised',
     );
     final apiBase = Uri.parse(discoveryJson['apiBaseUrl'] as String);
     check(apiBase.path.endsWith('/'), 'apiBaseUrl ends in a slash');
@@ -70,10 +79,119 @@ Future<void> main() async {
       'rightsStatement is present and non-empty',
     );
 
+    final discover = await request(client, apiBase.resolve('v1/discover'));
+    check(discover.status == 200, 'discover returns 200');
+    final discoverSections = (discover.json as Map)['sections'] as List;
+    check(discoverSections.length == 2, 'discover returns curated sections');
+    check(
+      (discoverSections.first as Map)['id'] == 'featured',
+      'discover section IDs are stable',
+    );
+
+    final categories = await request(client, apiBase.resolve('v1/categories'));
+    check(categories.status == 200, 'categories returns 200');
+    final categoryItems = (categories.json as Map)['items'] as List;
+    check(categoryItems.length == 2, 'categories returns source categories');
+    check(
+      categoryItems.any((item) => (item as Map)['id'] == 'protocol'),
+      'category IDs are browseable',
+    );
+
+    final latest = await request(
+      client,
+      apiBase.resolve('v1/browse?sort=latest&page=1&pageSize=20'),
+      headers: {'X-Open-Reading-Protocol': '1.6'},
+    );
+    check(latest.status == 200, 'latest browse returns 200');
+    final latestItems = (latest.json as Map)['items'] as List;
+    check(
+      (latestItems.first as Map)['id'] == 'river-of-pages',
+      'latest browse ordering is deterministic',
+    );
+
+    final categoryBrowse = await request(
+      client,
+      apiBase.resolve('v1/browse?category=protocol&sort=popular'),
+    );
+    final categoryBrowseItems = (categoryBrowse.json as Map)['items'] as List;
+    check(categoryBrowse.status == 200, 'category browse returns 200');
+    check(categoryBrowseItems.length == 1, 'category browse filters books');
+    check(
+      (categoryBrowseItems.single as Map)['id'] == 'protocol-garden',
+      'category browse uses category IDs unchanged',
+    );
+
+    final rankingCollection = await request(
+      client,
+      apiBase.resolve('v1/rankings'),
+    );
+    check(rankingCollection.status == 200, 'rankings returns 200');
+    final rankingDefinitions = (rankingCollection.json as Map)['items'] as List;
+    check(rankingDefinitions.length >= 2, 'multiple rankings are exposed');
+    check(
+      rankingDefinitions.any(
+        (item) =>
+            (item as Map)['id'] == 'weekly-popular' &&
+            item['period'] == 'weekly',
+      ),
+      'ranking definitions expose stable IDs and standard periods',
+    );
+    check(
+      rankingDefinitions.any(
+        (item) =>
+            (item as Map)['id'] == 'monthly-new' &&
+            item['categoryId'] == 'original',
+      ),
+      'rankings may reference source categories',
+    );
+
+    final rankingPage1 = await request(
+      client,
+      apiBase.resolve('v1/rankings/weekly-popular?page=1&pageSize=1'),
+    );
+    check(rankingPage1.status == 200, 'ranking page returns 200');
+    final rankingJson1 = rankingPage1.json as Map<String, dynamic>;
+    final rankingItems1 = rankingJson1['items'] as List;
+    check(rankingItems1.length == 1, 'ranking page size honored');
+    check(
+      (rankingItems1.single as Map)['rank'] == 1,
+      'ranking uses absolute one-based ranks',
+    );
+    check(
+      (rankingItems1.single as Map)['previousRank'] == 2,
+      'ranking may expose a previous comparable rank',
+    );
+    check(
+      ((rankingItems1.single as Map)['book'] as Map)['id'] == 'protocol-garden',
+      'ranking entries wrap the shared book model',
+    );
+    check(rankingJson1['hasMore'] == true, 'ranking page reports hasMore');
+    check(
+      rankingJson1['snapshotId'] is String,
+      'ranking page identifies its ordered snapshot',
+    );
+
+    final rankingPage2 = await request(
+      client,
+      apiBase.resolve('v1/rankings/weekly-popular?page=2&pageSize=1'),
+    );
+    final rankingJson2 = rankingPage2.json as Map<String, dynamic>;
+    final rankingItems2 = rankingJson2['items'] as List;
+    check(rankingPage2.status == 200, 'second ranking page returns 200');
+    check(
+      (rankingItems2.single as Map)['rank'] == 2,
+      'ranking page preserves absolute rank positions',
+    );
+    check(
+      rankingJson2['snapshotId'] == rankingJson1['snapshotId'],
+      'ranking pages share one snapshot identifier',
+    );
+    check(rankingJson2['hasMore'] == false, 'last ranking page');
+
     final searchPage1 = await request(
       client,
       apiBase.resolve('v1/search?q=Open%20Reading&page=1&pageSize=1&future=x'),
-      headers: {'X-Open-Reading-Protocol': '1.4'},
+      headers: {'X-Open-Reading-Protocol': '1.6'},
     );
     check(searchPage1.status == 200, 'search returns 200');
     final searchJson1 = searchPage1.json as Map<String, dynamic>;
@@ -169,6 +287,24 @@ Future<void> main() async {
       apiBase.resolve('v1/search?q=test&page=0'),
     );
     checkError(invalidPage, 400, 'INVALID_PARAMETER', check);
+
+    final invalidSort = await request(
+      client,
+      apiBase.resolve('v1/browse?sort=random'),
+    );
+    checkError(invalidSort, 400, 'INVALID_PARAMETER', check);
+
+    final invalidRankingPage = await request(
+      client,
+      apiBase.resolve('v1/rankings/weekly-popular?page=0'),
+    );
+    checkError(invalidRankingPage, 400, 'INVALID_PARAMETER', check);
+
+    final missingRanking = await request(
+      client,
+      apiBase.resolve('v1/rankings/does-not-exist'),
+    );
+    checkError(missingRanking, 404, 'RANKING_NOT_FOUND', check);
 
     final missingBook = await request(
       client,
