@@ -1,4 +1,4 @@
-interface:
-  display_name: "Origo Source ÔªÔ´´î½¨"
-  short_description: "´´½¨²¢ÑéÖ¤¼æÈİ ORSP µÄ¶ÀÁ¢ÊéÔ´£¬Ìá¹©×îĞ¡·şÎñºÍÍêÕûÄÜÁ¦²Î¿¼"
-  default_prompt: "Ê¹ÓÃ $origo-source-builder °ïÎÒ´î½¨Ò»¸öÌá¹©Ô­´´ÎÄÕÂÓëÁ¬ÔØÕÂ½ÚµÄÔªÔ´ÊéÔ´¡£"
+interface:
+  display_name: "Origo Source å…ƒæºæ­å»º"
+  short_description: "åˆ›å»ºå¹¶éªŒè¯å…¼å®¹ ORSP çš„ç‹¬ç«‹ä¹¦æºï¼Œæä¾›æœ€å°æœåŠ¡å’Œå®Œæ•´èƒ½åŠ›å‚è€ƒ"
+  default_prompt: "ä½¿ç”¨ $origo-source-builder å¸®æˆ‘æ­å»ºä¸€ä¸ªæä¾›åŸåˆ›æ–‡ç« ä¸è¿è½½ç« èŠ‚çš„å…ƒæºä¹¦æºã€‚"

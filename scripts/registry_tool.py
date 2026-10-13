@@ -275,6 +275,7 @@ def fetch(url: str) -> HttpResult:
                         "Accept-Encoding": "identity",
                         "User-Agent": "ORSP-Registry-Validator/1.0",
                         "X-Origo-Source-Protocol": "1.6",
+                        "X-Open-Reading-Protocol": "1.6",
                     },
                 )
                 response = connection.getresponse()

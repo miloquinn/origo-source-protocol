@@ -69,6 +69,8 @@ class Transport:
                         "User-Agent": "ORSP-Source-Probe/1.0",
                         "X-Origo-Source-Protocol": "1.6",
                         "X-Origo-Source-Request-Purpose": "health-check",
+                        "X-Open-Reading-Protocol": "1.6",
+                        "X-Open-Reading-Request-Purpose": "health-check",
                     },
                 )
                 response = connection.getresponse()
