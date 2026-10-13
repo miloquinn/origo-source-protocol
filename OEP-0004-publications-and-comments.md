@@ -124,8 +124,10 @@ capability dependencies require conformance checks as documented above.
 
 ## Implementation evidence
 
-Yuanchuang: `F:/code/Origo-Reader/platform/origo_platform/source_routes.py`,
-`epub_projection.py`, and tests `test_source.py`. Existing Origo X 1.x import,
+Yuanchuang is maintained in the independent `origo-creator` repository:
+`origo_creator/source_routes.py`, `origo_creator/epub_projection.py`, and
+`tests/test_source.py`. It is a content provider for multiple readers, not a
+module of Origo Reader or Origo X. Existing Origo X 1.x import,
 catalog and chapter model parsers can consume the deployed source without a new
 application binary. Public EPUB download works now; native file-download UI
 and comment/paragraph UI are separate follow-up implementations.

@@ -124,8 +124,8 @@ and HTTP 429 Retry-After are client policy. Do not rewrite caches on every read.
 actual HTTP reference server through append, same-count correction, rename,
 middle insertion, reorder, deletion, zero chapters, 304, stale-version conflict,
 multi-page changes and legacy endpoint cases. Production Yuanchuang implements
-the same profile in `platform/origo_platform/source_routes.py` with repeatable
-database snapshots. A protocol extension does not itself upgrade a reader's UI.
+the same profile in the independent `origo-creator` repository,
+`origo_creator/source_routes.py`, with repeatable database snapshots. A protocol extension does not itself upgrade a reader's UI.
 
 References: [HTTP conditional requests, RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html#name-conditional-requests)
 and [OEP-0004](OEP-0004-publications-and-comments.md).
