@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/miloquinn/origo-source-protocol/schemas/chapter-updates.schema.json",
+  "title": "OEP-0005 chapter update profile",
+  "$defs": {
+    "Token": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[A-Za-z0-9._~-]+$"
+    },
+    "ContentVersion": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "Chapter": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "order",
+        "contentVersion"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Token"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "contentVersion": {
+          "$ref": "#/$defs/ContentVersion"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "UpdateState": {
+      "type": "object",
+      "required": [
+        "bookId",
+        "catalogVersion",
+        "chapterCount"
+      ],
+      "properties": {
+        "bookId": {
+          "$ref": "#/$defs/Token"
+        },
+        "catalogVersion": {
+          "$ref": "#/$defs/Token"
+        },
+        "chapterCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "latestChapter": {
+          "$ref": "#/$defs/Chapter"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "chapterCount": {
+                "const": 0
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "latestChapter"
+              ]
+            }
+          },
+          "else": {
+            "required": [
+              "latestChapter"
+            ]
+          }
+        }
+      ]
+    },
+    "Catalog": {
+      "type": "object",
+      "required": [
+        "items",
+        "page",
+        "pageSize",
+        "total",
+        "hasMore",
+        "catalogVersion"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "$ref": "#/$defs/Chapter"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "pageSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "hasMore": {
+          "type": "boolean"
+        },
+        "catalogVersion": {
+          "$ref": "#/$defs/Token"
+        }
+      }
+    },
+    "Content": {
+      "type": "object",
+      "required": [
+        "bookId",
+        "chapterId",
+        "title",
+        "contentType",
+        "content",
+        "contentVersion"
+      ],
+      "properties": {
+        "bookId": {
+          "$ref": "#/$defs/Token"
+        },
+        "chapterId": {
+          "$ref": "#/$defs/Token"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "contentType": {
+          "enum": [
+            "text/plain",
+            "text/markdown",
+            "text/html"
+          ]
+        },
+        "content": {
+          "type": "string"
+        },
+        "contentVersion": {
+          "$ref": "#/$defs/ContentVersion"
+        }
+      }
+    }
+  }
+}

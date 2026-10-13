@@ -150,3 +150,7 @@ compatibility analysis and updated examples or schemas.
 ## EPUB and community extensions
 
 [OEP-0004](OEP-0004-publications-and-comments.md) adds experimental immutable EPUB downloads and draft work/paragraph comment contracts while preserving ORSP 1.5 core. [Yuanchuang manifest](examples/yuanchuang-source.json) is a working first-party source example. Comment capabilities are not deployed. Run `scripts/validate_creator_extensions.py` alongside existing validation.
+
+## Chapter updates
+
+[OEP-0005](OEP-0005-chapter-updates.md) adds experimental chapter-update state, catalog snapshot pinning and per-chapter text versions. Existing readers keep the core catalog path. Run `python scripts/validate_chapter_updates.py` for live append/correction/pagination checks.

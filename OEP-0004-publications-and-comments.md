@@ -88,10 +88,11 @@ introduce global SSO or require unrelated ORSP sources to use Origo accounts.
 ## Paragraph anchors (draft)
 
 Text targets use `{chapterId, contentVersion, selector}`. With paragraph-comments,
-chapter content additionally provides `canonicalText` and `contentVersion`.
+chapter content additionally provides `canonicalText` and `canonicalTextVersion`.
 `canonicalText` is versioned semantic source text, independent of pages, fonts,
 DOM IDs, renderer whitespace and device layout. Its exact UTF-8 SHA-256 is
-`contentVersion`; no implicit Unicode normalization is applied. A selector has
+`canonicalTextVersion`; the anchor’s `contentVersion` matches this value, not
+the chapter representation hash from OEP-0005. No implicit Unicode normalization is applied. A selector has
 `type: TextPositionSelector`, nonnegative `start`, exclusive `end > start`, and
 `quote: {exact, prefix?, suffix?}`. Offsets count Unicode scalar values, not
 UTF-16 code units or UTF-8 bytes. `exact` MUST match canonicalText[start:end].

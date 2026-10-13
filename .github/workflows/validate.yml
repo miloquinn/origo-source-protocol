@@ -30,6 +30,8 @@ jobs:
         run: python scripts/validate_contracts.py
       - name: Validate EPUB and draft comment extensions
         run: python scripts/validate_creator_extensions.py
+      - name: Validate chapter update contracts and HTTP refresh
+        run: python scripts/validate_chapter_updates.py
       - name: Validate reference registry tooling
         run: |
           python scripts/registry_tool.py validate

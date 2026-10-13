@@ -371,42 +371,14 @@ GET v1/books/{bookId}/chapters?page={page}&pageSize={pageSize}
 章节对象必须包含 `id`、`title` 和 `order`。`order` 是大于或等于零的整数。书源应在
 一本书内使用唯一的顺序值。顺序值相同时，客户端必须使用章节 ID 的升序作为第二排序键。
 
-目录页必须按照 `(order, id)` 排序。书源应为每个目录页提供 `ETag`。客户端加载多个页面
-时如果发现目录校验值发生变化，应重新加载目录，避免混合不同版本的数据。
+目录页必须按照 `(order, id)` 排序。书源应为每个目录页提供 `ETag`。ETag 校验对应
+页面的表示，不能比较不同页 URL 的 ETag 来判断整本书目录版本。
+重新验证同一页面发现变化时应重新加载目录，避免混合数据。书源应提供可靠的章节
+`updatedAt`，新增或修订章节时同步更新校验值。
 
-## 12. 章节正文
-
-接口关系：
-
-```text
-GET v1/books/{bookId}/chapters/{chapterId}
-```
-
-```json
-{
-  "bookId": "book-1001",
-  "chapterId": "chapter-1",
-  "title": "第一章",
-  "contentType": "text/plain",
-  "content": "章节正文",
-  "baseUrl": "https://books.example.org/books/book-1001/"
-}
-```
-
-`bookId` 和 `chapterId` 必须与请求的资源完全一致。`baseUrl` 可选；提供时必须是绝对
-HTTP(S) URL。
-
-ORSP 1.4 支持以下正文类型：
-
-- `text/plain`；
-- `text/markdown`，按照 CommonMark 解释；
-- `text/html`，内容必须是 HTML 片段而不是完整文档。
-
-相对链接和图片地址优先相对于 `baseUrl` 解析；没有 `baseUrl` 时，相对于最终章节请求
-URL 解析。
-
-HTML 不得包含脚本或其他可执行内容。书源应移除事件处理属性、危险 URL scheme、内嵌
-框架和活动表单控件。客户端仍然必须在渲染前清理 HTML。Markdown 内嵌 HTML 适用相同规则。
+可选实验能力 [OEP-0005](OEP-0005-chapter-updates.md) 补充更新状态、目录版本和逐章正文版本，
+详见[中文合同](docs/chapter-updates.zh-CN.md)。旧客户端保留原目录链路；
+只有声明此能力的书源才可以发送对应版本参数。
 
 ## 13. 错误
 

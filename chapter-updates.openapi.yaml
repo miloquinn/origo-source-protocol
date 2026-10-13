@@ -1,0 +1,257 @@
+openapi: 3.1.0
+info:
+  title: ORSP OEP-0005 chapter updates
+  version: 0.1.0
+  description: Experimental top.xxread:chapter-updates profile; existing ORSP core
+    relations remain compatible.
+servers:
+- url: https://creator.xxread.top/api/orsp
+paths:
+  /v1/books/{bookId}/updates:
+    get:
+      operationId: getChapterUpdateState
+      parameters:
+      - $ref: '#/components/parameters/BookId'
+      - $ref: '#/components/parameters/IfNoneMatch'
+      responses:
+        '200':
+          description: Current catalog version and latest chapter
+          headers:
+            ETag:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                type: string
+                example: no-cache
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateState'
+        '304':
+          description: Unchanged state; no response body
+        '404':
+          $ref: '#/components/responses/Error'
+  /v1/books/{bookId}/chapters:
+    get:
+      operationId: getVersionedCatalog
+      parameters:
+      - $ref: '#/components/parameters/BookId'
+      - $ref: '#/components/parameters/CatalogVersion'
+      - $ref: '#/components/parameters/IfNoneMatch'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: pageSize
+        in: query
+        description: Maximum is source maxCatalogPageSize, or 100 when omitted.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+      responses:
+        '200':
+          description: A catalog page from one version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Catalog'
+        '304':
+          description: This page representation unchanged
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+  /v1/books/{bookId}/chapters/{chapterId}:
+    get:
+      operationId: getVersionedChapter
+      parameters:
+      - $ref: '#/components/parameters/BookId'
+      - name: chapterId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Token'
+      - $ref: '#/components/parameters/CatalogVersion'
+      - $ref: '#/components/parameters/IfNoneMatch'
+      responses:
+        '200':
+          description: Chapter content with a SHA-256 version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Content'
+        '304':
+          description: Chapter representation unchanged
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+components:
+  parameters:
+    BookId:
+      name: bookId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Token'
+    CatalogVersion:
+      name: catalogVersion
+      in: query
+      description: Requires top.xxread:chapter-updates. A different version yields
+        409 X_CATALOG_VERSION_CONFLICT, even when If-None-Match would match.
+      schema:
+        $ref: '#/components/schemas/Token'
+    IfNoneMatch:
+      name: If-None-Match
+      in: header
+      schema:
+        type: string
+  responses:
+    Error:
+      description: Core ORSP error envelope. Version conflict uses X_CATALOG_VERSION_CONFLICT.
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - error
+            properties:
+              error:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+                  retryable:
+                    type: boolean
+  schemas:
+    Token:
+      type: string
+      minLength: 1
+      maxLength: 200
+      pattern: ^[A-Za-z0-9._~-]+$
+    ContentVersion:
+      type: string
+      pattern: ^[a-f0-9]{64}$
+    Chapter:
+      type: object
+      required:
+      - id
+      - title
+      - order
+      - contentVersion
+      properties:
+        id:
+          $ref: '#/components/schemas/Token'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        order:
+          type: integer
+          minimum: 0
+        contentVersion:
+          $ref: '#/components/schemas/ContentVersion'
+        updatedAt:
+          type: string
+          format: date-time
+    UpdateState:
+      type: object
+      required:
+      - bookId
+      - catalogVersion
+      - chapterCount
+      properties:
+        bookId:
+          $ref: '#/components/schemas/Token'
+        catalogVersion:
+          $ref: '#/components/schemas/Token'
+        chapterCount:
+          type: integer
+          minimum: 0
+        updatedAt:
+          type: string
+          format: date-time
+        latestChapter:
+          $ref: '#/components/schemas/Chapter'
+      allOf:
+      - if:
+          properties:
+            chapterCount:
+              const: 0
+        then:
+          not:
+            required:
+            - latestChapter
+        else:
+          required:
+          - latestChapter
+    Catalog:
+      type: object
+      required:
+      - items
+      - page
+      - pageSize
+      - total
+      - hasMore
+      - catalogVersion
+      properties:
+        items:
+          type: array
+          maxItems: 1000
+          items:
+            $ref: '#/components/schemas/Chapter'
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        total:
+          type: integer
+          minimum: 0
+        hasMore:
+          type: boolean
+        catalogVersion:
+          $ref: '#/components/schemas/Token'
+    Content:
+      type: object
+      required:
+      - bookId
+      - chapterId
+      - title
+      - contentType
+      - content
+      - contentVersion
+      properties:
+        bookId:
+          $ref: '#/components/schemas/Token'
+        chapterId:
+          $ref: '#/components/schemas/Token'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        contentType:
+          enum:
+          - text/plain
+          - text/markdown
+          - text/html
+        content:
+          type: string
+        contentVersion:
+          $ref: '#/components/schemas/ContentVersion'

@@ -6,8 +6,20 @@
   "description": "元创平台的公开书籍、文章与原创小说。",
   "apiBaseUrl": "https://creator.xxread.top/api/orsp/",
   "websiteUrl": "https://creator.xxread.top",
-  "languages": ["zh-CN"],
-  "capabilities": ["search", "detail", "catalog", "content", "discover", "categories", "browse", "top.xxread:publications"],
+  "languages": [
+    "zh-CN"
+  ],
+  "capabilities": [
+    "search",
+    "detail",
+    "catalog",
+    "content",
+    "discover",
+    "categories",
+    "browse",
+    "top.xxread:publications",
+    "top.xxread:chapter-updates"
+  ],
   "maxCatalogPageSize": 100,
   "rightsStatement": "仅提供平台公开作品；各作品许可见详情。"
 }

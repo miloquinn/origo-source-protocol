@@ -443,44 +443,16 @@ When order values are equal, clients MUST use the chapter ID as an ascending
 secondary sort key so display order remains deterministic.
 
 Catalog pages MUST be sorted by `(order, id)`. A source SHOULD return an `ETag`
-for each catalog page. A client that observes a changed catalog validator while
-loading multiple pages SHOULD restart catalog loading to avoid a mixed view.
+for each catalog page. An ETag validates that page's selected representation;
+clients MUST NOT compare ETags of different page URLs as one catalog version.
+A changed validator on a revalidated page SHOULD restart catalog loading to
+avoid a mixed view. Sources SHOULD expose reliable per-chapter `updatedAt` and
+refresh validators when chapters are added or corrected.
 
-## 12. Chapter content
-
-Endpoint relation:
-
-```text
-GET v1/books/{bookId}/chapters/{chapterId}
-```
-
-```json
-{
-  "bookId": "book-1001",
-  "chapterId": "chapter-1",
-  "title": "Chapter One",
-  "contentType": "text/plain",
-  "content": "Chapter content",
-  "baseUrl": "https://books.example.org/books/book-1001/"
-}
-```
-
-`bookId` and `chapterId` MUST exactly match the requested resource. `baseUrl` is
-optional and, when present, MUST be an absolute HTTP(S) URL.
-
-ORSP 1.4 content types are:
-
-- `text/plain`;
-- `text/markdown`, interpreted as CommonMark;
-- `text/html`, containing an HTML fragment rather than a complete document.
-
-Relative links and image URLs are resolved against `baseUrl` when provided,
-otherwise against the final chapter request URL.
-
-HTML MUST NOT contain scripts or other executable content. Sources SHOULD
-remove event-handler attributes, dangerous URL schemes, embedded frames, and
-active form controls. Clients MUST still sanitize HTML before rendering it.
-Raw HTML embedded in Markdown MUST receive the same treatment.
+The optional experimental [OEP-0005 chapter update profile](OEP-0005-chapter-updates.md)
+adds update state, consistent catalog versions and per-chapter text versions.
+Existing readers continue using core catalog reads; extension-aware clients
+send its version query only to sources advertising the capability.
 
 ## 13. Errors
 

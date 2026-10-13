@@ -184,3 +184,7 @@ ORSP 面向原创内容、公共领域内容以及已获得合法授权的内容
 ## EPUB、评论与段评
 
 [OEP-0004](OEP-0004-publications-and-comments.md) / [中文合同](docs/publications-and-comments.zh-CN.md) 提供 EPUB 实验扩展和评论、段评草案，保留 ORSP 1.5 旧接口。[元创书源](examples/yuanchuang-source.json) 已提供公开章节与 EPUB 下载；未部署的评论能力不在发现文档中声明。
+
+## 章节更新
+
+[OEP-0005](OEP-0005-chapter-updates.md) / [中文合同](docs/chapter-updates.zh-CN.md) 支持新增章节和正文修订，目录版本固定分页，保留旧接口。`python scripts/validate_chapter_updates.py` 验证真实 HTTP 追加、修订、重排、删除与版本冲突。

@@ -69,3 +69,5 @@ independent communities; see [registry/README.md](registry/README.md).
 
 By contributing, you agree that your contribution is licensed under the MIT
 License used by this repository.
+
+Chapter update extension checks: `python scripts/validate_chapter_updates.py`.

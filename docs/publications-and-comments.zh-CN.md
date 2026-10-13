@@ -32,7 +32,8 @@ EPUB 元数据包含不复用的出版文件 ID、HTTPS 下载地址、MIME、�
 公开作者仅包含 ID 与展示名，不包含邮箱、设备信息、令牌。
 
 文字锚点采用 Unicode 码点 `[start,end)`，同时保存 exact/prefix/suffix 引文。
-`contentVersion` 是 canonicalText 原文 UTF-8 的 SHA-256。
+锚点的 `contentVersion` 是 canonicalText 原文 UTF-8 的 SHA-256，对应正文响应的
+`canonicalTextVersion`；它与 OEP-0005 原格式正文的 `contentVersion` 区分。
 字号、设备、页码、DOM 序号和字体变化都不能改变锚点身份。
 Markdown 的原文位置与渲染位置必须显式映射，不能混用；EPUB CFI 使用独立选择器，
 绑定不可变 EPUB 文件 SHA-256 和包内资源，不能直接冒充文本偏移。
