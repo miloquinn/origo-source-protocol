@@ -380,6 +380,40 @@ GET v1/books/{bookId}/chapters?page={page}&pageSize={pageSize}
 详见[中文合同](docs/chapter-updates.zh-CN.md)。旧客户端保留原目录链路；
 只有声明此能力的书源才可以发送对应版本参数。
 
+## 12. 章节正文
+
+接口关系：
+
+```text
+GET v1/books/{bookId}/chapters/{chapterId}
+```
+
+```json
+{
+  "bookId": "book-1001",
+  "chapterId": "chapter-1",
+  "title": "第一章",
+  "contentType": "text/plain",
+  "content": "章节正文",
+  "baseUrl": "https://books.example.org/books/book-1001/"
+}
+```
+
+`bookId` 和 `chapterId` 必须与请求的资源完全一致。`baseUrl` 可选；提供时必须是绝对
+HTTP(S) URL。
+
+ORSP 1.4 支持以下正文类型：
+
+- `text/plain`；
+- `text/markdown`，按照 CommonMark 解释；
+- `text/html`，内容必须是 HTML 片段而不是完整文档。
+
+相对链接和图片地址优先相对于 `baseUrl` 解析；没有 `baseUrl` 时，相对于最终章节请求
+URL 解析。
+
+HTML 不得包含脚本或其他可执行内容。书源应移除事件处理属性、危险 URL scheme、内嵌
+框架和活动表单控件。客户端仍然必须在渲染前清理 HTML。Markdown 内嵌 HTML 适用相同规则。
+
 ## 13. 错误
 
 核心状态码：

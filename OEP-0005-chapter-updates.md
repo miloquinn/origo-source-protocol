@@ -1,6 +1,6 @@
 # OEP-0005: Chapter updates and consistent catalog refresh
 
-Status: **Experimental**  
+Status: **Experimental**
 Target: optional `top.xxread:chapter-updates` profile on ORSP 1.x.
 
 [中文合同](docs/chapter-updates.zh-CN.md) ·
