@@ -1,4 +1,8 @@
-# Open Reading Source Protocol
+# Origo Source
+
+**Origo Source (元源)** is the public name of this source ecosystem. Its HTTP
+contract remains **Open Reading Source Protocol (ORSP)**. Existing discovery
+identifiers, paths, headers and source IDs do not change with the human name.
 
 **English** · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) ·
 [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) ·
@@ -186,3 +190,7 @@ EPUB. Its real HTTP tests cover media expiry, ranges, body corrections and
 ranking snapshots. The bounded, read-only probe reports structure without
 retaining chapter bodies. Sampled compatibility does not prove every asset or
 physical-device playback. Protocol updates do not deploy third-party sources.
+
+## Source builder Skill
+
+`skills/origo-source-builder/` includes a runnable, file-backed core/text source, chapter updates, scaffolding and canonical profile references. Build from a committed ref with `python scripts/build_source_skill.py`; validate scaffolding and real HTTP with `python scripts/validate_source_skill.py`. The website presents Origo Source at [open.xxread.top/sources](https://open.xxread.top/sources).

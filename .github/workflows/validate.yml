@@ -36,6 +36,8 @@ jobs:
         run: python scripts/validate_reading_profiles.py
       - name: Validate read-only source diagnostics
         run: python scripts/test_probe_source.py
+      - name: Validate downloadable source builder Skill
+        run: python scripts/validate_source_skill.py
       - name: Validate reference registry tooling
         run: |
           python scripts/registry_tool.py validate

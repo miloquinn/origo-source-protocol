@@ -1,4 +1,7 @@
-# Open Reading Source Protocol
+# 元源（Origo Source）
+
+元源是对外介绍名称，底层 HTTP 协议继续使用 **ORSP（Open Reading Source Protocol）**。
+已有 `open-reading-source` 识别字段、发现路径、接口、请求头与书源 ID 保持兼容。
 
 [English](README.md) · **简体中文** · [繁體中文](README.zh-TW.md) ·
 [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) ·
@@ -213,3 +216,7 @@ python scripts/probe_source.py https://books.example.org/.well-known/open-readin
 检查工具只读取并输出结构诊断，不保存书籍正文；采样通过不代表所有作品与客户端播放均已验收。
 用户提供的书源仍声明 1.1，升级需由源作者部署；[本轮检查](docs/source-audit-2026-10-13.md)
 已记录核心可访问与缺少正文 title 的具体问题。
+
+## 元源搭建 Skill
+
+`skills/origo-source-builder/` 提供可运行的文字书源、章节更新、脚手架与规范引用。`python scripts/build_source_skill.py` 从指定 Git 提交生成自包含包；`python scripts/validate_source_skill.py` 验证解压后的生成项目与真实 HTTP。官网介绍入口为 [元源](https://open.xxread.top/sources)。

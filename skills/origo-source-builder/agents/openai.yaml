@@ -1,0 +1,4 @@
+interface:
+  display_name: "Origo Source 元源搭建"
+  short_description: "创建并验证兼容 ORSP 的独立书源，提供最小服务和完整能力参考"
+  default_prompt: "使用 $origo-source-builder 帮我搭建一个提供原创文章与连载章节的元源书源。"
