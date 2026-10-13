@@ -53,7 +53,7 @@ stable source ID.
 
 This repository retains schemas and tooling under
 [`registry/`](registry/README.md) as a non-official reference implementation.
-The Open Reading project does not operate or distribute a registry. Independent
+The Origo X project does not operate or distribute a registry. Independent
 communities may fork the reference and use their own operational experience to
 guide a future federated format.
 

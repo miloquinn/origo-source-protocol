@@ -25,7 +25,7 @@ def expect_invalid(validator: Draft202012Validator, value: object, name: str) ->
 
 def main() -> None:
     schema = load_json("schemas/discovery.schema.json")
-    discovery = load_json("examples/open-reading-source.json")
+    discovery = load_json("examples/origo-source.json")
     validator = Draft202012Validator(schema, format_checker=FormatChecker())
     validator.validate(discovery)
 

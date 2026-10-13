@@ -6,6 +6,9 @@ import hashlib
 import importlib.util
 import io
 import json
+import shutil
+import socket
+import ssl
 import subprocess
 import sys
 import tempfile
@@ -103,10 +106,29 @@ def main():
             incoming.replace(project / "library.json")
 
         try:
-            discovery, _ = get("/.well-known/open-reading-source.json")
+            discovery, _ = get("/.well-known/origo-source.json")
             contracts.validator("discovery").validate(discovery)
+            check(
+                discovery["protocol"] == "origo-source",
+                "Canonical Origo Source identity",
+            )
+            legacy, legacy_headers = get("/.well-known/open-reading-source.json")
+            contracts.validator("discovery").validate(legacy)
+            check(
+                legacy["protocol"] == "open-reading-source",
+                "Legacy readers receive legacy identifier",
+            )
+            check(
+                {**legacy, "protocol": "origo-source"} == discovery,
+                "Both discovery entries describe the same source",
+            )
+            check(
+                legacy_headers["X-Origo-Source-Protocol"]
+                == legacy_headers["X-Open-Reading-Protocol"],
+                "Equivalent migration headers",
+            )
             report = probe(
-                base + "/.well-known/open-reading-source.json",
+                base + "/.well-known/origo-source.json",
                 transport=Transport(allow_loopback=True),
             )
             check(
@@ -190,9 +212,92 @@ def main():
                     check(True, "Unsafe public origin rejected")
                 else:
                     raise AssertionError("Invalid public origin accepted")
+            openssl = (
+                shutil.which("openssl") or "C:/Program Files/Git/usr/bin/openssl.exe"
+            )
+            cert, key = project / "test-cert.pem", project / "test-key.pem"
+            subprocess.run(
+                [
+                    openssl,
+                    "req",
+                    "-x509",
+                    "-newkey",
+                    "rsa:2048",
+                    "-nodes",
+                    "-keyout",
+                    str(key),
+                    "-out",
+                    str(cert),
+                    "-days",
+                    "1",
+                    "-subj",
+                    "/CN=localhost",
+                    "-addext",
+                    "subjectAltName=IP:127.0.0.1,DNS:localhost",
+                ],
+                check=True,
+                capture_output=True,
+            )
+            secure = module.create_server(
+                project / "library.json", port=0, tls_cert=cert, tls_key=key
+            )
+            secure_thread = Thread(target=secure.serve_forever, daemon=True)
+            secure_thread.start()
+            secure_base = f"https://127.0.0.1:{secure.server_port}"
+            try:
+                trusted = ssl.create_default_context(cafile=str(cert))
+                with urlopen(
+                    secure_base + "/.well-known/origo-source.json",
+                    context=trusted,
+                    timeout=5,
+                ) as response:
+                    secured = json.load(response)
+                    check(
+                        secured["apiBaseUrl"] == secure_base + "/api/",
+                        "Direct TLS advertises HTTPS",
+                    )
+                    contracts.validator("discovery").validate(secured)
+                with urlopen(
+                    secure_base + book + "/chapters/second-page",
+                    context=trusted,
+                    timeout=5,
+                ) as response:
+                    check(
+                        response.status == 200,
+                        "Chapter content works over verified HTTPS",
+                    )
+                try:
+                    urlopen(secure_base + "/.well-known/origo-source.json", timeout=5)
+                except OSError:
+                    check(True, "Untrusted certificate is rejected")
+                else:
+                    raise AssertionError("Untrusted certificate accepted")
+                wrong_host = ssl.create_default_context(cafile=str(cert))
+                try:
+                    with wrong_host.wrap_socket(
+                        socket.create_connection(
+                            ("127.0.0.1", secure.server_port), timeout=5
+                        ),
+                        server_hostname="wrong.example.org",
+                    ):
+                        pass
+                except ssl.SSLCertVerificationError:
+                    check(True, "Incorrect TLS hostname is rejected")
+                else:
+                    raise AssertionError("Incorrect hostname accepted")
+            finally:
+                secure.shutdown()
+                secure.server_close()
+                secure_thread.join(timeout=2)
+            try:
+                module.create_server(project / "library.json", port=0, tls_cert=cert)
+            except ValueError:
+                check(True, "Partial TLS configuration is rejected")
+            else:
+                raise AssertionError("Partial TLS configuration accepted")
             library["id"] = "changed-source-id"
             replace(library)
-            get("/.well-known/open-reading-source.json", 503)
+            get("/.well-known/origo-source.json", 503)
         finally:
             server.shutdown()
             server.server_close()

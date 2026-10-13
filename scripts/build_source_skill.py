@@ -42,7 +42,7 @@ def build(*, ref="HEAD", worktree=False):
         if path.startswith("/") or ".." in Path(path).parts:
             raise ValueError("Invalid contract resource path")
         files["references/orsp/" + path] = read(path)
-    version = json.loads(read("examples/open-reading-source.json"))["protocolVersion"]
+    version = json.loads(read("examples/origo-source.json"))["protocolVersion"]
     starter_version = re.search(
         rb'PROTOCOL_VERSION = "([0-9]+\.[0-9]+)"', files["assets/server.py"]
     )[1].decode()
@@ -53,7 +53,7 @@ def build(*, ref="HEAD", worktree=False):
         "name": "origo-source-builder",
         "brand": "Origo Source",
         "chineseName": "元源",
-        "protocol": "open-reading-source",
+        "protocol": "origo-source",
         "protocolVersion": version,
         "protocolStatus": "candidate",
         "sourceRepository": "https://github.com/miloquinn/origo-source-protocol",

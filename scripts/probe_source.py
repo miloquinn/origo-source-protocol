@@ -67,8 +67,8 @@ class Transport:
                         "Accept": "application/json",
                         "Accept-Encoding": "identity",
                         "User-Agent": "ORSP-Source-Probe/1.0",
-                        "X-Open-Reading-Protocol": "1.6",
-                        "X-Open-Reading-Request-Purpose": "health-check",
+                        "X-Origo-Source-Protocol": "1.6",
+                        "X-Origo-Source-Request-Purpose": "health-check",
                     },
                 )
                 response = connection.getresponse()

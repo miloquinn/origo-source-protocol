@@ -13,7 +13,7 @@
   "schemas/creator-extensions.schema.json",
   "schemas/chapter-updates.schema.json",
   "schemas/media-reading.schema.json",
-  "examples/open-reading-source.json",
+  "examples/origo-source.json",
   "examples/yuanchuang-source.json",
   "examples/dart_server.dart",
   "examples/chapter_updates_server.py",

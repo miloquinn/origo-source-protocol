@@ -107,6 +107,7 @@ class ChapterUpdateSource:
                     "*" in tags or etag in [tag.removeprefix("W/") for tag in tags]
                 )
                 self.send_response(304 if unchanged else status)
+                self.send_header("X-Origo-Source-Protocol", "1.5")
                 self.send_header("X-Open-Reading-Protocol", "1.5")
                 self.send_header(
                     "Cache-Control", cache if status == 200 else "no-store"
@@ -147,11 +148,16 @@ class ChapterUpdateSource:
                 }
                 if metadata:
                     book["latestChapter"] = metadata[-1]["title"]
-                if path == "/.well-known/open-reading-source.json":
+                if path in (
+                    "/.well-known/origo-source.json",
+                    "/.well-known/open-reading-source.json",
+                ):
                     self.reply(
                         200,
                         {
-                            "protocol": "open-reading-source",
+                            "protocol": "open-reading-source"
+                            if path.endswith("/open-reading-source.json")
+                            else "origo-source",
                             "protocolVersion": "1.5",
                             "id": "org.example.chapter-updates",
                             "name": "Chapter update reference",

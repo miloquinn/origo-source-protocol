@@ -34,3 +34,18 @@ Origo Source / 元源 are human names. ORSP's existing JSON discriminator,
 well-known path, capability tokens and endpoint relations remain intact.
 New capabilities are optional profiles with fallback and conformance checks;
 account authentication, payments and reading synchronization have separate APIs.
+
+## HTTP and HTTPS delivery
+
+Public sources should expose `https://books.example.org/.well-known/origo-source.json`.
+Behind a TLS reverse proxy, run `python server.py --public-origin https://books.example.org`
+and keep the upstream on loopback. For direct TLS, use
+`python server.py --tls-cert /secure/fullchain.pem --tls-key /secure/private.pem`;
+both options are required together. The listener then advertises an HTTPS API
+origin and requires TLS 1.2 or later. Supply `--public-origin` with the actual
+public hostname when exposing it externally. Provision certificates through your
+hosting provider; never export production keys in this Skill or source repository.
+The certificate-generating validation test uses an ephemeral local certificate.
+Clients keep hostname and trust verification enabled. HTTP is supported for local
+development and explicit existing sources; it is never an automatic TLS fallback.
+The legacy discovery alias returns the old protocol identifier for installed readers.

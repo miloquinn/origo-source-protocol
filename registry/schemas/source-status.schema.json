@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/miloquinn/open-reading-source-protocol/registry/schemas/source-status.schema.json",
+  "$id": "https://github.com/miloquinn/origo-source-protocol/registry/schemas/source-status.schema.json",
   "title": "ORSP Registry Source Diagnostic Record",
   "type": "object",
   "additionalProperties": false,

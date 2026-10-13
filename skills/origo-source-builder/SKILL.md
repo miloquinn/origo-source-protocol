@@ -6,8 +6,12 @@ description: "Create or extend an independent Origo Source (元源) service comp
 # Origo Source 元源搭建
 
 Build a working source using the user's content and preferred stack. Origo Source
-is the public name; ORSP is the protocol. Keep `protocol: open-reading-source`,
-the well-known filename, existing `v1/...` relations, headers and source IDs.
+is the Origo X source ecosystem; ORSP means Origo Source Protocol. New sources
+use `protocol: origo-source`, `/.well-known/origo-source.json`, and
+`X-Origo-Source-*` headers. HTTPS is recommended for public services; both HTTP
+and HTTPS are supported. Serve the old discovery path with the old discriminator
+and retain legacy headers for installed readers. Keep existing `v1/...` relations
+and stable source IDs. Do not disable certificate verification.
 The bundled contract is ORSP 1.6 **candidate**, not a stable release.
 
 ## Start with the actual project
@@ -69,7 +73,7 @@ Start the actual generated service and run:
 
 ```bash
 python -m pip install -r contract/requirements.txt
-python contract/scripts/probe_source.py http://127.0.0.1:8787/.well-known/open-reading-source.json --allow-loopback
+python contract/scripts/probe_source.py http://127.0.0.1:8787/.well-known/origo-source.json --allow-loopback
 ```
 
 The probe samples one book/chapter and does not download assets. Also exercise

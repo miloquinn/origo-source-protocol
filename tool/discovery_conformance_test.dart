@@ -18,7 +18,7 @@ Future<void> main() async {
   try {
     final manifest = await _request(
       client,
-      baseUri.resolve('.well-known/open-reading-source.json'),
+      baseUri.resolve('.well-known/origo-source.json'),
     );
     check(
       manifest.statusCode == HttpStatus.ok,
@@ -92,7 +92,7 @@ Future<void> main() async {
 
 Future<HttpClientResponse> _request(HttpClient client, Uri uri) async {
   final request = await client.getUrl(uri);
-  request.headers.set('X-Open-Reading-Protocol', '1.4');
+  request.headers.set('X-Origo-Source-Protocol', '1.4');
   return request.close();
 }
 

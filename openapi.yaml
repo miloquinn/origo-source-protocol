@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: Open Reading Source Protocol
+  title: Origo Source Protocol
   version: '1.6'
   description: 'ORSP 1.6 candidate: Core Reading, Discovery and Rankings, with optional
     OEP-0006 image/audio representations. EPUB and chapter updates have separate companion
@@ -305,7 +305,7 @@ paths:
 components:
   parameters:
     ProtocolVersion:
-      name: X-Open-Reading-Protocol
+      name: X-Origo-Source-Protocol
       in: header
       required: false
       description: Highest ORSP 1.x version supported by the client.
@@ -313,7 +313,7 @@ components:
         type: string
         pattern: ^1\.(?:0|[1-9][0-9]*)$
     RequestPurpose:
-      name: X-Open-Reading-Request-Purpose
+      name: X-Origo-Source-Request-Purpose
       in: header
       required: false
       description: Advisory request purpose. Use health-check for operator probes;

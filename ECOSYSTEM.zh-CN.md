@@ -46,7 +46,7 @@ ORSP 核心是阅读器和书源实现的 HTTP 契约。它定义数据和行为
 稳定的书源 ID。
 
 本仓库在 [`registry/`](registry/README.zh-CN.md) 中保留非官方参考 Schema 与工具，但
-Open Reading 项目不运营或分发 Registry。独立社区可以 Fork 该参考实现，并用自己的运营
+Origo X 项目不运营或分发 Registry。独立社区可以 Fork 该参考实现，并用自己的运营
 经验推动后续联邦格式。
 
 ## 信任模型

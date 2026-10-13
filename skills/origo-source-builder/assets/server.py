@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import re
+import ssl
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
@@ -35,7 +36,22 @@ def public_origin(value):
     return value.rstrip("/")
 
 
-def create_server(library_path, *, host="127.0.0.1", port=8787, origin=None):
+def create_server(
+    library_path,
+    *,
+    host="127.0.0.1",
+    port=8787,
+    origin=None,
+    tls_cert=None,
+    tls_key=None,
+):
+    if bool(tls_cert) != bool(tls_key):
+        raise ValueError("tls-cert and tls-key must be provided together")
+    context = None
+    if tls_cert:
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
+        context.load_cert_chain(tls_cert, tls_key)
     library = FileLibrary(library_path)
     advertised_origin = public_origin(origin) if origin else None
 
@@ -54,6 +70,7 @@ def create_server(library_path, *, host="127.0.0.1", port=8787, origin=None):
             )
             self.send_response(304 if unchanged else status)
             self.send_header("ETag", etag)
+            self.send_header("X-Origo-Source-Protocol", PROTOCOL_VERSION)
             self.send_header("X-Open-Reading-Protocol", PROTOCOL_VERSION)
             self.send_header(
                 "Cache-Control", "no-cache" if status == 200 else "no-store"
@@ -89,13 +106,19 @@ def create_server(library_path, *, host="127.0.0.1", port=8787, origin=None):
             parsed = urlsplit(self.path)
             query = parse_qs(parsed.query, keep_blank_values=True)
             path = parsed.path
-            if path == "/.well-known/open-reading-source.json":
+            if path in (
+                "/.well-known/origo-source.json",
+                "/.well-known/open-reading-source.json",
+            ):
                 base = (
-                    advertised_origin or f"http://127.0.0.1:{self.server.server_port}"
+                    advertised_origin
+                    or f"{'https' if context else 'http'}://127.0.0.1:{self.server.server_port}"
                 )
                 self.reply(
                     {
-                        "protocol": "open-reading-source",
+                        "protocol": "open-reading-source"
+                        if path.endswith("/open-reading-source.json")
+                        else "origo-source",
                         "protocolVersion": PROTOCOL_VERSION,
                         "id": snapshot.source_id,
                         "name": snapshot.name,
@@ -214,7 +237,14 @@ def create_server(library_path, *, host="127.0.0.1", port=8787, origin=None):
                 return
             self.reply(book.content[chapter_id])
 
-    return ThreadingHTTPServer((host, port), Handler)
+    server = ThreadingHTTPServer((host, port), Handler)
+    if context:
+        try:
+            server.socket = context.wrap_socket(server.socket, server_side=True)
+        except Exception:
+            server.server_close()
+            raise
+    return server
 
 
 def main():
@@ -225,9 +255,18 @@ def main():
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8787)
     parser.add_argument("--public-origin", type=public_origin)
+    parser.add_argument("--tls-cert", type=Path)
+    parser.add_argument("--tls-key", type=Path)
     args = parser.parse_args()
+    if bool(args.tls_cert) != bool(args.tls_key):
+        parser.error("--tls-cert and --tls-key must be provided together")
     server = create_server(
-        args.library, host=args.host, port=args.port, origin=args.public_origin
+        args.library,
+        host=args.host,
+        port=args.port,
+        origin=args.public_origin,
+        tls_cert=args.tls_cert,
+        tls_key=args.tls_key,
     )
     print(f"Origo Source listening on {args.host}:{server.server_port}", flush=True)
     try:

@@ -2,12 +2,12 @@
 
 ## 官方仅提供协议
 
-Open Reading Source Protocol 项目只发布中立的 HTTP 协议、Schema、一致性测试工具和
+Origo Source Protocol 项目只发布中立的 HTTP 协议、Schema、一致性测试工具和
 原创参考样例，不运营、不分发、不推荐、不背书或认证任何第三方书源，也不提供官方书源
 订阅地址。
 
 `registry/` 目录仅作为参考数据格式和工具样例保留，供独立社区在自行承担治理责任的前提下
-搭建自己的目录。本仓库不接受书源收录投稿，Open Reading 官方 App 也不读取
+搭建自己的目录。本仓库不接受书源收录投稿，Origo X 官方 App 也不读取
 `registry/generated/registry.json`。
 
 ## 书源内容责任

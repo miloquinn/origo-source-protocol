@@ -5,7 +5,7 @@
 ## Scope
 
 This is a policy template for independent communities operating an ORSP
-registry. The Open Reading project does not operate an active registry or
+registry. The Origo X project does not operate an active registry or
 accept source-listing submissions. Adopters are responsible for implementing
 their own review, rights-reporting, security, and removal process. Listing must
 not be presented as certification of content ownership, security, permanence,

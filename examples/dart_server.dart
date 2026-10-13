@@ -49,6 +49,7 @@ class ReferenceSourceServer {
 
   void _handle(HttpRequest request) {
     _cors(request.response);
+    request.response.headers.set('X-Origo-Source-Protocol', protocolVersion);
     request.response.headers.set('X-Open-Reading-Protocol', protocolVersion);
 
     if (request.method == 'OPTIONS') {
@@ -64,9 +65,12 @@ class ReferenceSourceServer {
 
     final path = request.uri.path;
     final segments = request.uri.pathSegments;
-    if (path == '/.well-known/open-reading-source.json') {
+    if (path == '/.well-known/origo-source.json' ||
+        path == '/.well-known/open-reading-source.json') {
       _sendJson(request, 200, {
-        'protocol': 'open-reading-source',
+        'protocol': path.endsWith('/open-reading-source.json')
+            ? 'open-reading-source'
+            : 'origo-source',
         'protocolVersion': protocolVersion,
         'contentTypes': ['text/plain'],
         'supportedVersions': ['1.4', '1.5', protocolVersion],
@@ -78,7 +82,7 @@ class ReferenceSourceServer {
         'maxCatalogPageSize': maxCatalogPageSize,
         'operatorName': 'ORSP Reference Project',
         'contactUrl':
-            'https://github.com/miloquinn/open-reading-source-protocol/issues',
+            'https://github.com/miloquinn/origo-source-protocol/issues',
         'contentLicense':
             'Original example content under the repository license',
         'rightsStatement':
@@ -439,9 +443,12 @@ class ReferenceSourceServer {
       ..set('Access-Control-Allow-Methods', 'GET, OPTIONS')
       ..set(
         'Access-Control-Allow-Headers',
-        'Accept, Content-Type, If-None-Match, X-Open-Reading-Protocol',
+        'Accept, Content-Type, If-None-Match, X-Origo-Source-Protocol, X-Open-Reading-Protocol',
       )
-      ..set('Access-Control-Expose-Headers', 'ETag, X-Open-Reading-Protocol');
+      ..set(
+        'Access-Control-Expose-Headers',
+        'ETag, X-Origo-Source-Protocol, X-Open-Reading-Protocol',
+      );
   }
 }
 
@@ -538,7 +545,7 @@ const books = <String, BookData>{
     {
       'id': 'protocol-garden',
       'title': '协议花园',
-      'author': 'Open Reading',
+      'author': 'Origo X',
       'description': 'An original micro-story used to test ORSP.',
       'categories': ['Original', 'Protocol'],
       'status': 'completed',
@@ -560,7 +567,7 @@ const books = <String, BookData>{
     {
       'id': 'river-of-pages',
       'title': '书页之河',
-      'author': 'Open Reading',
+      'author': 'Origo X',
       'description': 'A second original sample used for pagination tests.',
       'categories': ['Original'],
       'status': 'ongoing',
@@ -631,9 +638,7 @@ Future<void> main(List<String> arguments) async {
   final server = ReferenceSourceServer();
   final uri = await server.start(port: port);
   stdout.writeln('ORSP reference source: $uri');
-  stdout.writeln(
-    'Discovery: ${uri.resolve('.well-known/open-reading-source.json')}',
-  );
+  stdout.writeln('Discovery: ${uri.resolve('.well-known/origo-source.json')}');
   stdout.writeln('Press Ctrl+C to stop.');
   final stopped = Completer<void>();
   ProcessSignal.sigint.watch().listen((_) {

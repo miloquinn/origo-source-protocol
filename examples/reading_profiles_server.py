@@ -330,6 +330,7 @@ class ReadingProfileSource:
                     "*" in tags or etag in [tag.removeprefix("W/") for tag in tags]
                 )
                 self.send_response(304 if not_modified else status)
+                self.send_header("X-Origo-Source-Protocol", "1.6")
                 self.send_header("X-Open-Reading-Protocol", "1.6")
                 self.send_header("ETag", etag)
                 self.send_header(
@@ -366,11 +367,16 @@ class ReadingProfileSource:
                     parsed.path,
                     parse_qs(parsed.query, keep_blank_values=True),
                 )
-                if path == "/.well-known/open-reading-source.json":
+                if path in (
+                    "/.well-known/origo-source.json",
+                    "/.well-known/open-reading-source.json",
+                ):
                     self.reply(
                         200,
                         {
-                            "protocol": "open-reading-source",
+                            "protocol": "open-reading-source"
+                            if path.endswith("/open-reading-source.json")
+                            else "origo-source",
                             "protocolVersion": "1.6",
                             "id": "org.example.reading-profiles",
                             "name": "Complete reading reference",

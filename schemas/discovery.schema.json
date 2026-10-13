@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/miloquinn/open-reading-source-protocol/schemas/discovery.schema.json",
-  "title": "Open Reading Source Discovery Document",
+  "$id": "https://github.com/miloquinn/origo-source-protocol/schemas/discovery.schema.json",
+  "title": "Origo Source Discovery Document",
   "type": "object",
   "additionalProperties": true,
   "required": [
@@ -14,7 +14,8 @@
   ],
   "properties": {
     "protocol": {
-      "const": "open-reading-source"
+      "enum": ["origo-source", "open-reading-source"],
+      "description": "origo-source is canonical; open-reading-source is a legacy compatibility identifier."
     },
     "protocolVersion": {
       "type": "string",

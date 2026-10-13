@@ -1,10 +1,10 @@
-# Open Reading Source Protocol
+# Origo Source Protocol
 
 [English](README.md) · [简体中文](README.zh-CN.md) · **繁體中文** ·
 [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) ·
 [協議規範](SPECIFICATION.md) · [OpenAPI](openapi.yaml)
 
-Open Reading Source Protocol（ORSP，開放閱讀書源協議）是一套連接閱讀應用程式與
+Origo Source Protocol（ORSP，開放閱讀書源協議）是一套連接閱讀應用程式與
 獨立內容服務的開放 HTTP 協議。它以統一方式提供搜尋、書籍詳情、章節目錄與正文內容。
 
 閱讀器只需實作一次 ORSP，即可連接所有相容書源。書源開發者可以為原創、公共領域或
@@ -25,7 +25,7 @@ Open Reading Source Protocol（ORSP，開放閱讀書源協議）是一套連接
 每個書源必須提供發現文件：
 
 ```text
-GET /.well-known/open-reading-source.json
+GET /.well-known/origo-source.json
 ```
 
 並實作四個核心端點：

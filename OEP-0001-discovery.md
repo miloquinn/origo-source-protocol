@@ -57,7 +57,7 @@ unless that behavior is documented outside the protocol.
 
 ## Implementation evidence
 
-- The Open Reading Flutter client implements capability-gated discovery with
+- The Origo X Flutter client implements capability-gated discovery with
   fallback to core search.
 - This repository's Dart reference source implements all three capabilities.
 - The conformance suite covers positive discovery/category/browse flows and

@@ -1,5 +1,9 @@
 # ORSP 1.6 Schema 索引
 
+ORSP 全称为 Origo Source Protocol，属于 Origo X 元源生态。
+发现 `protocol` 首选 `origo-source`，Schema 同时接受旧 `open-reading-source` 以兼容已有 1.x 书源；其他标识无效。
+发现、API 与资源 URL 均支持 HTTP 和 HTTPS，公开服务推荐 HTTPS。稳定 ID 与数据字段语义不因改名改变。
+
 本文索引机器契约，不复制字段定义。变更字段时修改规范与对应 Schema，同步生成 OpenAPI，
 运行验证脚本。候选能力及接入状态见[完整阅读指南](source-upgrade-guide.zh-CN.md)。
 

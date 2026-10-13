@@ -86,10 +86,12 @@ def create_source(destination, source_id, name):
         + name
         + "\n\nAn independent Origo Source using ORSP 1.6 candidate. Python 3.11+.\n\n"
         "```sh\npython server.py --port 8787\npython -m pip install -r contract/requirements.txt\n"
-        "python contract/scripts/probe_source.py http://127.0.0.1:8787/.well-known/open-reading-source.json --allow-loopback\n```\n\n"
+        "python contract/scripts/probe_source.py http://127.0.0.1:8787/.well-known/origo-source.json --allow-loopback\n```\n\n"
         "Core text reading, browse and chapter updates are implemented. Update library.json atomically; do not change published IDs.\n"
         "Storage lives in library.py; HTTP lives in server.py. The file limit is 8 MiB. For a requested proxy deployment use "
-        "`--public-origin https://books.example.org`. Keep content outside immutable code releases.\n\n"
+        "`--public-origin https://books.example.org`. Direct HTTPS uses `--tls-cert /secure/fullchain.pem --tls-key /secure/private.pem` together. "
+        "Public HTTPS is recommended; local HTTP remains supported. New discovery is `/.well-known/origo-source.json`; the old discovery alias remains available for installed readers. "
+        "Keep content outside immutable code releases.\n\n"
         "Other profiles need implementation before declaration. Bundled reference checks validate the contract fixtures, not this service.\n",
         encoding="utf-8",
     )

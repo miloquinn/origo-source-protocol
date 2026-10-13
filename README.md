@@ -1,8 +1,10 @@
 # Origo Source
 
-**Origo Source (元源)** is the public name of this source ecosystem. Its HTTP
-contract remains **Open Reading Source Protocol (ORSP)**. Existing discovery
-identifiers, paths, headers and source IDs do not change with the human name.
+**Origo Source (元源)** is the source ecosystem for **Origo X**. Its HTTP(S)
+contract is **Origo Source Protocol (ORSP)**. New sources use `origo-source`,
+`/.well-known/origo-source.json` and `X-Origo-Source-*` headers. HTTPS is the
+recommended public transport; HTTP remains supported. Old Open Reading names
+are compatibility aliases only; stable source, book and chapter IDs stay intact.
 
 **English** · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) ·
 [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) ·
@@ -12,7 +14,7 @@ identifiers, paths, headers and source IDs do not change with the human name.
 [Source policy](SOURCE_POLICY.md) ·
 [中文书源政策](SOURCE_POLICY.zh-CN.md)
 
-Open Reading Source Protocol (ORSP) is an open HTTP contract for connecting
+Origo Source Protocol (ORSP) is an open HTTP contract for connecting
 reading applications to independent book and serial-content providers.
 
 A reader implements ORSP once. Source developers can then either:
@@ -28,7 +30,7 @@ rules.
 Every source publishes a discovery document:
 
 ```text
-GET /.well-known/open-reading-source.json
+GET /.well-known/origo-source.json
 ```
 
 It implements four core reading operations:
@@ -70,7 +72,7 @@ Example discovery document:
 
 ```json
 {
-  "protocol": "open-reading-source",
+  "protocol": "origo-source",
   "protocolVersion": "1.6",
   "id": "org.example.public-books",
   "name": "Example Public Books",
@@ -138,7 +140,7 @@ registries; registries do not redefine the wire protocol. See
 
 This project does not operate an official source directory and does not accept
 source-listing submissions. The `registry/` directory is reference tooling for
-independent communities only; the official Open Reading app does not consume
+independent communities only; the official Origo X app does not consume
 its generated output. See [SOURCE_POLICY.md](SOURCE_POLICY.md).
 
 ## Responsible use
@@ -182,7 +184,7 @@ OEP-0007 avoids a collision with the existing registry-diagnostics OEP-0003.
 python examples/reading_profiles_server.py
 python scripts/validate_reading_profiles.py
 python scripts/test_probe_source.py
-python scripts/probe_source.py https://books.example.org/.well-known/open-reading-source.json
+python scripts/probe_source.py https://books.example.org/.well-known/origo-source.json
 ```
 
 The reference uses original text, generated PNG/WAV assets and a deterministic

@@ -3,7 +3,7 @@
 [简体中文](README.zh-CN.md)
 
 This directory is a non-official reference implementation of a federated ORSP
-registry format. The Open Reading project does not operate an active source
+registry format. The Origo X project does not operate an active source
 directory, does not accept source-listing submissions, and does not distribute
 `registry/generated/registry.json` to the official app.
 

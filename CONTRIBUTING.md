@@ -2,7 +2,7 @@
 
 [简体中文](CONTRIBUTING.zh-CN.md)
 
-Thank you for helping improve Open Reading Source Protocol.
+Thank you for helping improve Origo Source Protocol.
 
 Read [GOVERNANCE.md](GOVERNANCE.md) before proposing a protocol change. ORSP
 optimizes for interoperability across independently developed readers and

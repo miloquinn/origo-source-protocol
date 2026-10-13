@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-本目录是联邦式 ORSP Registry 的非官方参考实现。Open Reading 项目不运营活动书源目录、
+本目录是联邦式 ORSP Registry 的非官方参考实现。Origo X 项目不运营活动书源目录、
 不接受书源收录投稿，也不会把 `registry/generated/registry.json` 分发给官方 App。
 
 独立社区如果愿意自行承担审核、权利投诉、安全和下架治理责任，可以复用或 Fork 这里的

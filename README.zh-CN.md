@@ -1,7 +1,10 @@
 # 元源（Origo Source）
 
-元源是对外介绍名称，底层 HTTP 协议继续使用 **ORSP（Open Reading Source Protocol）**。
-已有 `open-reading-source` 识别字段、发现路径、接口、请求头与书源 ID 保持兼容。
+**元源（Origo Source）** 是 **Origo X** 的书源生态，协议名称为
+**ORSP（Origo Source Protocol）**。新书源使用 `origo-source` 标识、
+`/.well-known/origo-source.json` 发现入口与 `X-Origo-Source-*` 请求头。
+支持 HTTP 和 HTTPS，公开服务推荐 HTTPS；Open Reading 旧名称仅作为兼容别名。
+书源、书籍、章节的稳定 ID 不因改名变化。
 
 [English](README.md) · **简体中文** · [繁體中文](README.zh-TW.md) ·
 [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) ·
@@ -9,8 +12,8 @@
 [治理机制](GOVERNANCE.zh-CN.md) · [生态架构](ECOSYSTEM.zh-CN.md) ·
 [书源与权利政策](SOURCE_POLICY.zh-CN.md)
 
-Open Reading Source Protocol（ORSP，开放阅读书源协议）是一套用于连接阅读应用与
-独立内容服务的开放 HTTP 协议。它让不同书源以统一方式提供搜索、书籍详情、章节目录
+Origo Source Protocol（ORSP，元源协议）是一套用于连接阅读应用与
+独立内容服务的开放 HTTP(S) 协议。它让不同书源以统一方式提供搜索、书籍详情、章节目录
 和正文内容。
 
 阅读器只需要实现一次 ORSP，就可以连接所有符合协议的书源。书源开发者可以：
@@ -37,14 +40,14 @@ Open Reading Source Protocol（ORSP，开放阅读书源协议）是一套用于
 每个书源必须发布一个发现文档：
 
 ```text
-GET /.well-known/open-reading-source.json
+GET /.well-known/origo-source.json
 ```
 
 发现文档用于声明书源身份、协议版本、API 地址、支持语言和能力：
 
 ```json
 {
-  "protocol": "open-reading-source",
+  "protocol": "origo-source",
   "protocolVersion": "1.6",
   "id": "org.example.public-books",
   "name": "示例公共图书源",
@@ -110,7 +113,7 @@ dart run examples/dart_server.dart
 可以先验证发现接口：
 
 ```bash
-curl http://127.0.0.1:8787/.well-known/open-reading-source.json
+curl http://127.0.0.1:8787/.well-known/origo-source.json
 curl "http://127.0.0.1:8787/api/v1/search?q=协议&page=1&pageSize=20"
 ```
 
@@ -118,7 +121,7 @@ curl "http://127.0.0.1:8787/api/v1/search?q=协议&page=1&pageSize=20"
 
 一个最小可用的 ORSP 书源可以按以下顺序实现：
 
-1. 提供 `/.well-known/open-reading-source.json` 发现文档；
+1. 提供 `/.well-known/origo-source.json` 发现文档；
 2. 实现搜索、详情、目录和正文四个接口；
 3. 使用稳定、不随标题变化的书籍 ID 和章节 ID；
 4. 使用 UTF-8 JSON，并为错误返回合适的 HTTP 状态码；
@@ -139,7 +142,7 @@ SPECIFICATION.zh-CN.md          简体中文协议翻译
 openapi.yaml                    OpenAPI 3.1 接口定义
 schemas/discovery.schema.json   发现文档 JSON Schema
 examples/dart_server.dart       可运行的 Dart 参考书源
-examples/open-reading-source.json 发现文档示例
+examples/origo-source.json 发现文档示例
 tool/conformance_test.dart      端到端核心一致性测试
 tool/discovery_conformance_test.dart Discovery Profile 一致性测试
 GOVERNANCE.zh-CN.md             协议变更与发布治理
@@ -167,7 +170,7 @@ dart run tool/discovery_conformance_test.dart
 详细边界参见 [ECOSYSTEM.zh-CN.md](ECOSYSTEM.zh-CN.md)。
 
 本项目不运营官方书源目录，也不接受书源收录投稿。`registry/` 仅保留为独立社区可自行采用
-的参考格式和工具；Open Reading 官方 App 不读取其中生成的索引。详细边界见
+的参考格式和工具；Origo X 官方 App 不读取其中生成的索引。详细边界见
 [书源与权利政策](SOURCE_POLICY.zh-CN.md)。
 
 ## 合法与负责任地使用
@@ -178,7 +181,7 @@ ORSP 面向原创内容、公共领域内容以及已获得合法授权的内容
 协议本身不授予任何内容版权或访问权限。书源运营者负责确认内容授权，客户端开发者也
 应提供清晰的来源信息与移除机制。
 
-协议兼容不构成内容合法性认证。Open Reading 官方项目不提供书源地址，用户添加的每个
+协议兼容不构成内容合法性认证。Origo X 官方项目不提供书源地址，用户添加的每个
 书源均由其独立选择。
 
 ## 参与贡献
@@ -210,7 +213,7 @@ ORSP 面向原创内容、公共领域内容以及已获得合法授权的内容
 python examples/reading_profiles_server.py
 python scripts/validate_reading_profiles.py
 python scripts/test_probe_source.py
-python scripts/probe_source.py https://books.example.org/.well-known/open-reading-source.json
+python scripts/probe_source.py https://books.example.org/.well-known/origo-source.json
 ```
 
 检查工具只读取并输出结构诊断，不保存书籍正文；采样通过不代表所有作品与客户端播放均已验收。

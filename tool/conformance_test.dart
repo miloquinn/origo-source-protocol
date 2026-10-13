@@ -17,7 +17,7 @@ Future<void> main() async {
   try {
     final discovery = await request(
       client,
-      baseUri.resolve('.well-known/open-reading-source.json'),
+      baseUri.resolve('.well-known/origo-source.json'),
     );
     check(discovery.status == 200, 'discovery returns 200');
     check(
@@ -32,7 +32,25 @@ Future<void> main() async {
       'source advertises its protocol version header',
     );
     final discoveryJson = discovery.json as Map<String, dynamic>;
-    check(discoveryJson['protocol'] == 'open-reading-source', 'protocol token');
+    check(
+      discovery.headers.value('x-origo-source-protocol') == '1.6',
+      'source advertises canonical protocol header',
+    );
+    final legacyDiscovery = await request(
+      client,
+      baseUri.resolve('.well-known/open-reading-source.json'),
+    );
+    final legacyJson = legacyDiscovery.json as Map<String, dynamic>;
+    check(
+      legacyJson['protocol'] == 'open-reading-source',
+      'legacy discovery identity',
+    );
+    check(
+      legacyJson['id'] == discoveryJson['id'] &&
+          legacyJson['apiBaseUrl'] == discoveryJson['apiBaseUrl'],
+      'aliases retain source and API identity',
+    );
+    check(discoveryJson['protocol'] == 'origo-source', 'protocol token');
     check(discoveryJson['protocolVersion'] == '1.6', 'protocol version');
     final capabilities = (discoveryJson['capabilities'] as List).toSet();
     check(
@@ -100,7 +118,7 @@ Future<void> main() async {
     final latest = await request(
       client,
       apiBase.resolve('v1/browse?sort=latest&page=1&pageSize=20'),
-      headers: {'X-Open-Reading-Protocol': '1.6'},
+      headers: {'X-Origo-Source-Protocol': '1.6'},
     );
     check(latest.status == 200, 'latest browse returns 200');
     final latestItems = (latest.json as Map)['items'] as List;
@@ -190,8 +208,8 @@ Future<void> main() async {
 
     final searchPage1 = await request(
       client,
-      apiBase.resolve('v1/search?q=Open%20Reading&page=1&pageSize=1&future=x'),
-      headers: {'X-Open-Reading-Protocol': '1.6'},
+      apiBase.resolve('v1/search?q=Origo%20X&page=1&pageSize=1&future=x'),
+      headers: {'X-Origo-Source-Protocol': '1.6'},
     );
     check(searchPage1.status == 200, 'search returns 200');
     final searchJson1 = searchPage1.json as Map<String, dynamic>;
@@ -205,7 +223,7 @@ Future<void> main() async {
 
     final searchPage2 = await request(
       client,
-      apiBase.resolve('v1/search?q=Open%20Reading&page=2&pageSize=1'),
+      apiBase.resolve('v1/search?q=Origo%20X&page=2&pageSize=1'),
     );
     final searchJson2 = searchPage2.json as Map<String, dynamic>;
     check((searchJson2['items'] as List).length == 1, 'second search page');

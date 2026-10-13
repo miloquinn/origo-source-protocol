@@ -10,10 +10,33 @@
 本文中的“必须（MUST）”“不得（MUST NOT）”“应当（SHOULD）”“不应当
 （SHOULD NOT）”和“可以（MAY）”按照 RFC 2119 与 RFC 8174 解释。
 
+## 名称与安全传输
+
+产品名称为 **Origo X**，书源生态名称为 **Origo Source（元源）**，
+ORSP 全称为 **Origo Source Protocol**。新书源必须在
+`/.well-known/origo-source.json` 使用 `protocol: origo-source`。
+新客户端必须接受此标识与旧 `open-reading-source`，拒绝其他未知标识。
+1.x JSON 语义及 `v1/...` 接口保持兼容；书源、书籍、章节 ID 不因改名改变。
+
+为服务已安装的旧阅读器，新 1.x 书源必须同时提供
+`/.well-known/open-reading-source.json`，此兼容入口仍返回旧标识，且与新入口
+具有相同的书源 ID、来源、API 基址和能力，不能重定向到返回新标识的文档。
+它不是第二个书源。已有旧书源无需立即新增入口。
+新响应头使用 `X-Origo-Source-Protocol`，迁移期应当同时返回等值的
+`X-Open-Reading-Protocol`。旧 `X-Open-Reading-Request-Purpose` 与新
+`X-Origo-Source-Request-Purpose` 具有相同的建议性语义，新头优先。
+
+协议支持 `http://` 和 `https://`；接口与状态描述中的 HTTP 同时适用于两种传输。
+公开生产环境的发现文档、API、EPUB 和媒体资源应当使用 HTTPS。
+HTTPS 客户端必须验证证书链及主机名，不得静默降级至 HTTP。
+服务应当使用 TLS 1.2 或更新版本；可由反向代理终止 TLS，私有上游使用 HTTP。
+本地开发可以使用 HTTP。HTTP/2、HTTP/3 由部署层协商，不改变 JSON 合同，
+也不作为核心阅读的强制要求。
+
 ## 1. 范围和设计目标
 
-开放阅读书源协议（Open Reading Source Protocol，ORSP）定义了阅读客户端与独立内容
-书源之间安全的 HTTP 边界。ORSP 1.6 包括：
+开放阅读书源协议（Origo Source Protocol，ORSP）定义了阅读客户端与独立内容
+书源之间安全的 HTTP(S) 边界。ORSP 1.6 包括：
 
 - 书源发现；
 - 书籍搜索与元数据；
@@ -62,7 +85,7 @@ Schema 明确允许，否则书源不得返回 `null`。
 书源必须在站点根路径提供 JSON 发现文档：
 
 ```text
-/.well-known/open-reading-source.json
+/.well-known/origo-source.json
 ```
 
 客户端也可以接受用户或书源目录提供的完整发现文档 URL。重定向规则见第 5 节。
@@ -71,7 +94,7 @@ Schema 明确允许，否则书源不得返回 `null`。
 
 | 字段 | 要求 |
 | --- | --- |
-| `protocol` | 必须等于 `open-reading-source` |
+| `protocol` | 必须等于 `origo-source` |
 | `protocolVersion` | ORSP `主版本.次版本`；本文使用 `1.6` |
 | `id` | 稳定且全局唯一的书源标识 |
 | `name` | 面向用户的书源名称 |
@@ -174,9 +197,9 @@ scheme，并应当在下载封面或其他远程资源前应用平台相关的�
 
 - 核心接口使用 `GET`，并且必须是安全且幂等的；
 - 客户端应发送 `Accept: application/json`；
-- 客户端应通过 `X-Open-Reading-Protocol` 发送自己支持的最高 ORSP 1.x 版本，例如 `1.6`；
+- 客户端应通过 `X-Origo-Source-Protocol` 发送自己支持的最高 ORSP 1.x 版本，例如 `1.6`；
 - 书源可以通过同名响应头返回自己的协议版本；
-- 客户端或运维探针可以发送 `X-Open-Reading-Request-Purpose: health-check`。
+- 客户端或运维探针可以发送 `X-Origo-Source-Request-Purpose: health-check`。
   书源应当将带有该值的请求排除在面向读者的统计和排行之外。此请求头仅用于说明用途，
   不得授予访问权限、绕过速率限制或改变内容授权；未发送该头的请求视为用户请求；
 - 不支持的方法必须返回 `405 Method Not Allowed`，并应包含 `Allow` 响应头；

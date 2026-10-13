@@ -1,5 +1,5 @@
 {
-  "protocol": "open-reading-source",
+  "protocol": "origo-source",
   "protocolVersion": "1.6",
   "supportedVersions": [
     "1.4",
@@ -8,7 +8,7 @@
   ],
   "id": "org.example.public-books",
   "name": "Example Public Books",
-  "description": "A minimal Open Reading compatible source",
+  "description": "A minimal Origo X compatible source",
   "apiBaseUrl": "https://books.example.org/api/",
   "iconUrl": "https://books.example.org/icon.png",
   "websiteUrl": "https://books.example.org/",

@@ -70,7 +70,7 @@ def main():
             return body, response.headers
 
     try:
-        discovery, _ = get("/.well-known/open-reading-source.json")
+        discovery, _ = get("/.well-known/origo-source.json")
         check(CAPABILITY in discovery["capabilities"], "Advertised capability")
         discovery_schema = json.loads(
             (ROOT / "schemas/discovery.schema.json").read_text(encoding="utf-8")

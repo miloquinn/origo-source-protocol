@@ -70,7 +70,7 @@ def main():
             return body, response.headers
 
     try:
-        manifest, _ = get("/.well-known/open-reading-source.json")
+        manifest, _ = get("/.well-known/origo-source.json")
         valid("discovery", None, manifest)
         for capability, content_type in (
             ("top.xxread:image-sequence", "image/sequence"),
@@ -369,7 +369,7 @@ def main():
             model="ErrorResponse",
         )
         report = probe(
-            base + "/.well-known/open-reading-source.json",
+            base + "/.well-known/origo-source.json",
             transport=Transport(allow_loopback=True),
         )
         check(

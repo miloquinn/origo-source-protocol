@@ -2,7 +2,7 @@
 
 ## Protocol-only official scope
 
-The Open Reading Source Protocol project publishes a neutral HTTP protocol,
+The Origo Source Protocol project publishes a neutral HTTP protocol,
 schemas, conformance tools, and original reference fixtures. It does not
 operate, distribute, recommend, endorse, or certify any third-party book source
 and does not provide an official source feed.
@@ -10,7 +10,7 @@ and does not provide an official source feed.
 The `registry/` directory is retained only as a reference data format and
 tooling example for independent communities that choose to operate their own
 registries. This repository does not accept source-listing submissions, and the
-official Open Reading app does not consume `registry/generated/registry.json`.
+official Origo X app does not consume `registry/generated/registry.json`.
 
 ## Responsibility for source content
 

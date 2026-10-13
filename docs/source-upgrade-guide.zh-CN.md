@@ -28,7 +28,7 @@
 
 ```json
 {
-  "protocol": "open-reading-source",
+  "protocol": "origo-source",
   "protocolVersion": "1.6",
   "id": "org.example.original-reading",
   "name": "Original reading",
@@ -96,7 +96,7 @@ dart run tool/discovery_conformance_test.dart
 python examples/reading_profiles_server.py
 
 # 仅 GET，不保存正文，不访问未声明的可选接口。
-python scripts/probe_source.py https://books.example.org/.well-known/open-reading-source.json
+python scripts/probe_source.py https://books.example.org/.well-known/origo-source.json
 ```
 
 检查工具默认禁止私网，`--allow-loopback` 只用于本地示例。最多 20 次 HTTP 请求（含

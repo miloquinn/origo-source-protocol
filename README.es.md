@@ -1,10 +1,10 @@
-# Open Reading Source Protocol
+# Origo Source Protocol
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) ·
 [日本語](README.ja.md) · [한국어](README.ko.md) · **Español** ·
 [Especificación](SPECIFICATION.md) · [OpenAPI](openapi.yaml)
 
-Open Reading Source Protocol (ORSP) es un protocolo HTTP abierto que conecta
+Origo Source Protocol (ORSP) es un protocolo HTTP abierto que conecta
 aplicaciones de lectura con servicios de contenido independientes. Ofrece una
 interfaz común para búsquedas, metadatos de libros, capítulos y contenido.
 
@@ -18,7 +18,7 @@ ORSP a un servicio que estén autorizados a utilizar.
 Cada fuente publica un documento de descubrimiento:
 
 ```text
-GET /.well-known/open-reading-source.json
+GET /.well-known/origo-source.json
 ```
 
 También implementa cuatro operaciones principales:

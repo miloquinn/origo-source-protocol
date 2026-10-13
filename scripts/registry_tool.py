@@ -55,7 +55,9 @@ class HttpResult:
         try:
             return strict_json(self.body.decode("utf-8"))
         except (UnicodeDecodeError, ValueError) as error:
-            raise RegistryError(f"{self.url} did not return valid UTF-8 JSON") from error
+            raise RegistryError(
+                f"{self.url} did not return valid UTF-8 JSON"
+            ) from error
 
 
 class PinnedHTTPSConnection(http.client.HTTPSConnection):
@@ -161,7 +163,9 @@ def validate_entries() -> list[dict[str, Any]]:
                 f"{path.relative_to(ROOT)}: filename must be {source_id}.json"
             )
         if source_id in ids:
-            failures.append(f"{path.relative_to(ROOT)}: duplicate source ID {source_id}")
+            failures.append(
+                f"{path.relative_to(ROOT)}: duplicate source ID {source_id}"
+            )
         ids.add(source_id)
         entries.append(entry)
 
@@ -270,7 +274,7 @@ def fetch(url: str) -> HttpResult:
                         "Accept": "application/json",
                         "Accept-Encoding": "identity",
                         "User-Agent": "ORSP-Registry-Validator/1.0",
-                        "X-Open-Reading-Protocol": "1.6",
+                        "X-Origo-Source-Protocol": "1.6",
                     },
                 )
                 response = connection.getresponse()
@@ -294,7 +298,9 @@ def fetch(url: str) -> HttpResult:
                 continue
             body = response.read(MAX_JSON_BYTES + 1)
             if len(body) > MAX_JSON_BYTES:
-                raise RegistryError(f"Response exceeds {MAX_JSON_BYTES} bytes: {current_url}")
+                raise RegistryError(
+                    f"Response exceeds {MAX_JSON_BYTES} bytes: {current_url}"
+                )
             return HttpResult(
                 current_url,
                 response.status,
@@ -320,7 +326,9 @@ def require_json(url: str, label: str) -> tuple[dict[str, Any], HttpResult]:
     return value, result
 
 
-def checked_api_url(api_base: str, relation: str, query: dict[str, str] | None = None) -> str:
+def checked_api_url(
+    api_base: str, relation: str, query: dict[str, str] | None = None
+) -> str:
     if not api_base.endswith("/"):
         raise RegistryError("Discovery apiBaseUrl must end in /")
     url = urljoin(api_base, relation)
@@ -360,7 +368,9 @@ def check_source(path: Path, profile: str = "core-reading") -> dict[str, Any]:
         discovery,
     )
     if discovery_errors:
-        raise RegistryError("Invalid discovery document:\n- " + "\n- ".join(discovery_errors))
+        raise RegistryError(
+            "Invalid discovery document:\n- " + "\n- ".join(discovery_errors)
+        )
     if discovery["id"] != entry["id"]:
         raise RegistryError(
             f"Source ID mismatch: registry={entry['id']} discovery={discovery['id']}"
@@ -380,34 +390,52 @@ def check_source(path: Path, profile: str = "core-reading") -> dict[str, Any]:
         if not required.issubset(capabilities):
             missing = ", ".join(sorted(required - capabilities))
             raise RegistryError(f"Discovery profile is missing capabilities: {missing}")
-        discover, result = require_json(checked_api_url(api_base, "v1/discover"), "Discover")
+        discover, result = require_json(
+            checked_api_url(api_base, "v1/discover"), "Discover"
+        )
         timings["discover"] = result.elapsed_ms
         sections = discover.get("sections")
         if not isinstance(sections, list) or not any(
-            isinstance(section, dict) and isinstance(section.get("items"), list) and section["items"]
+            isinstance(section, dict)
+            and isinstance(section.get("items"), list)
+            and section["items"]
             for section in sections
         ):
             raise RegistryError("Discover did not return a non-empty section")
         stages["discover"] = {"status": "ok", "latencyMs": result.elapsed_ms}
 
-        categories, result = require_json(checked_api_url(api_base, "v1/categories"), "Categories")
+        categories, result = require_json(
+            checked_api_url(api_base, "v1/categories"), "Categories"
+        )
         timings["categories"] = result.elapsed_ms
         category_items = categories.get("items")
-        if not isinstance(category_items, list) or not category_items or not isinstance(category_items[0], dict):
+        if (
+            not isinstance(category_items, list)
+            or not category_items
+            or not isinstance(category_items[0], dict)
+        ):
             raise RegistryError("Categories did not return a browseable category")
         category_id = require_id(category_items[0].get("id"), "Category ID")
         stages["categories"] = {"status": "ok", "latencyMs": result.elapsed_ms}
 
         browse, result = require_json(
-            checked_api_url(api_base, "v1/browse", {"category": category_id, "page": "1", "pageSize": "1"}),
+            checked_api_url(
+                api_base,
+                "v1/browse",
+                {"category": category_id, "page": "1", "pageSize": "1"},
+            ),
             "Browse",
         )
         timings["browse"] = result.elapsed_ms
         browse_items = browse.get("items")
         if not isinstance(browse_items, list) or not browse_items:
-            raise RegistryError("Browse did not return a book for the declared category")
+            raise RegistryError(
+                "Browse did not return a book for the declared category"
+            )
         stages["browse"] = {"status": "ok", "latencyMs": result.elapsed_ms}
-        return diagnostic_report(entry["id"], profile, discovery["protocolVersion"], stages, warnings)
+        return diagnostic_report(
+            entry["id"], profile, discovery["protocolVersion"], stages, warnings
+        )
 
     search_url = checked_api_url(
         api_base,
@@ -460,9 +488,13 @@ def check_source(path: Path, profile: str = "core-reading") -> dict[str, Any]:
     contract_errors = contracts.issues("core", "ChapterContent", content)
     contract_errors.extend(media_issues(discovery, content))
     if contract_errors:
-        raise RegistryError("Invalid chapter representation:\n- " + "\n- ".join(contract_errors))
+        raise RegistryError(
+            "Invalid chapter representation:\n- " + "\n- ".join(contract_errors)
+        )
 
-    return diagnostic_report(entry["id"], profile, discovery["protocolVersion"], stages, warnings)
+    return diagnostic_report(
+        entry["id"], profile, discovery["protocolVersion"], stages, warnings
+    )
 
 
 def diagnostic_report(
@@ -484,7 +516,9 @@ def diagnostic_report(
     }
     errors = format_validation_errors(json_validator(STATUS_SCHEMA_PATH), report)
     if errors:
-        raise RegistryError("Generated diagnostic record is invalid:\n- " + "\n- ".join(errors))
+        raise RegistryError(
+            "Generated diagnostic record is invalid:\n- " + "\n- ".join(errors)
+        )
     return report
 
 
@@ -511,7 +545,9 @@ def check_all_command(args: argparse.Namespace) -> None:
                 {
                     "id": path.stem,
                     "status": "offline",
-                    "checkedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                    "checkedAt": datetime.now(timezone.utc)
+                    .isoformat()
+                    .replace("+00:00", "Z"),
                     "error": str(error),
                 }
             )
@@ -548,7 +584,9 @@ def parser() -> argparse.ArgumentParser:
     )
     check_source_parser.add_argument("entry", help="path to a source entry JSON file")
     check_source_parser.add_argument("--status-output")
-    check_source_parser.add_argument("--profile", choices=["core-reading", "discovery"], default="core-reading")
+    check_source_parser.add_argument(
+        "--profile", choices=["core-reading", "discovery"], default="core-reading"
+    )
     check_source_parser.set_defaults(function=check_source_command)
 
     check_all = commands.add_parser(

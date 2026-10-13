@@ -1,4 +1,4 @@
-# Open Reading Source Protocol 1.6
+# Origo Source Protocol 1.6
 
 [简体中文翻译](SPECIFICATION.zh-CN.md)
 
@@ -8,9 +8,37 @@ The key words MUST, MUST NOT, REQUIRED, SHOULD, SHOULD NOT, and MAY in this
 document are to be interpreted as described in RFC 2119 and RFC 8174 when, and
 only when, they appear in all capitals.
 
+## Names and secure transport
+
+The product is **Origo X**; the source ecosystem is **Origo Source (元源)**.
+ORSP means **Origo Source Protocol**. New sources MUST use `protocol:
+origo-source` at `/.well-known/origo-source.json`. New clients MUST accept both
+`origo-source` and the legacy `open-reading-source` identifier. The 1.x JSON
+semantics and `v1/...` relations are unchanged. Unknown identifiers MUST be
+rejected. Branding changes MUST NOT reassign stable source, book or chapter IDs.
+
+To serve installed readers, a new 1.x source MUST also expose
+`/.well-known/open-reading-source.json` with `protocol: open-reading-source` and
+the same source ID, origin, API base and capabilities. This is a compatibility
+alias, not a separate source or a redirect to a new discriminator. Old sources
+remain valid without implementing the new alias. New response headers use
+`X-Origo-Source-Protocol`; sources SHOULD emit the equivalent legacy
+`X-Open-Reading-Protocol` header during migration. The legacy
+`X-Open-Reading-Request-Purpose` header has the same advisory semantics as
+`X-Origo-Source-Request-Purpose`; the canonical header takes precedence.
+
+Both `http://` and `https://` URLs are supported; “HTTP” in endpoint and status
+descriptions denotes HTTP semantics over either transport. Public production
+sources SHOULD use HTTPS for discovery, APIs, publications and media assets.
+HTTPS clients MUST verify the certificate chain and hostname. Sources SHOULD
+support TLS 1.2 or later; reverse proxies may terminate TLS while the private
+upstream uses HTTP. Local development MAY use HTTP. Clients MUST NOT silently
+downgrade an HTTPS request to HTTP. HTTP/2 and HTTP/3 may be negotiated by the
+hosting layer and MUST NOT change the JSON contract or become a core requirement.
+
 ## 1. Scope and design goals
 
-Open Reading Source Protocol (ORSP) defines a safe HTTP boundary between a
+Origo Source Protocol (ORSP) defines a safe HTTP(S) boundary between a
 reading client and an independently operated content source. ORSP 1.6 covers:
 
 - source discovery;
@@ -75,7 +103,7 @@ explicitly permits it.
 A source MUST expose a JSON discovery document at the origin-root path:
 
 ```text
-/.well-known/open-reading-source.json
+/.well-known/origo-source.json
 ```
 
 Clients MAY also accept a complete discovery-document URL supplied by a user or
@@ -85,7 +113,7 @@ Required discovery members:
 
 | Member | Requirement |
 | --- | --- |
-| `protocol` | MUST equal `open-reading-source` |
+| `protocol` | MUST equal `origo-source` |
 | `protocolVersion` | ORSP `MAJOR.MINOR`; this specification uses `1.6` |
 | `id` | Stable globally unique source identifier |
 | `name` | Human-readable source name |
@@ -214,11 +242,11 @@ how to interpret it.
 
 - Core endpoints use `GET` and MUST be safe and idempotent.
 - Clients SHOULD send `Accept: application/json`.
-- Clients SHOULD send `X-Open-Reading-Protocol` with their highest supported
+- Clients SHOULD send `X-Origo-Source-Protocol` with their highest supported
   ORSP 1.x version, for example `1.6`.
-- Sources MAY return `X-Open-Reading-Protocol` containing the source protocol
+- Sources MAY return `X-Origo-Source-Protocol` containing the source protocol
   version.
-- A client or operator probe MAY send `X-Open-Reading-Request-Purpose:
+- A client or operator probe MAY send `X-Origo-Source-Request-Purpose:
   health-check`. Sources SHOULD exclude requests with this value from
   reader-facing analytics and rankings. The header is advisory only and MUST
   NOT grant access, bypass rate limits, or alter content authorization.
@@ -231,7 +259,7 @@ Clients MAY follow redirects, subject to all of the following:
 
 - no more than five redirects per request;
 - redirect targets MUST use HTTP(S);
-- production clients SHOULD NOT follow an HTTPS-to-HTTP downgrade;
+- clients MUST NOT silently follow an HTTPS-to-HTTP downgrade;
 - credentials or private headers MUST NOT be forwarded to a different origin.
 
 Clients SHOULD enforce configurable connection, response-time, decompressed

@@ -5,7 +5,7 @@
 
 | GET 关系 | 使用条件 | 权威合同 |
 | --- | --- | --- |
-| 原点 `/.well-known/open-reading-source.json` | 必须 | `schemas/discovery.schema.json` |
+| 原点 `/.well-known/origo-source.json` | 必须 | `schemas/discovery.schema.json` |
 | `v1/search`、`v1/books/{bookId}` | 必须 | `openapi.yaml` |
 | `v1/books/{bookId}/chapters`、`.../chapters/{chapterId}` | 必须；媒体需单独声明 | `openapi.yaml`、OEP-0006 |
 | `v1/discover`、`v1/categories`、`v1/browse` | 各自声明能力；categories 依赖 browse | `openapi.yaml` |

@@ -7,7 +7,7 @@
 ## 当前元创接入
 
 - 名称：元创；稳定书源 ID：`origo-yuanchuang`。
-- 地址：`https://creator.xxread.top/.well-known/open-reading-source.json`。
+- 地址：`https://creator.xxread.top/.well-known/origo-source.json`。
 - 基础 API：`https://creator.xxread.top/api/orsp/`。
 - 开元阅读现有 ORSP 1.x 导入即可使用；公开 EPUB 可按文本章节阅读，也能下载完整原文件。
 - 个人草稿不进入书源。此次不发布评论或段评写入服务。
