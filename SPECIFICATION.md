@@ -277,6 +277,12 @@ response body.
 An entity tag identifies the complete selected representation. Sources MUST
 change it when a response changes in a way visible to a client.
 
+A client MAY bypass its own cached catalog or chapter body for an explicit
+refresh by issuing the existing `GET` relation again. This does not require a
+new endpoint, capability, or protocol version. HTTP validators and normal
+`304 Not Modified` semantics still apply; a refresh request is not a guarantee
+that the representation changed.
+
 ## 6. Search
 
 Endpoint relation:
